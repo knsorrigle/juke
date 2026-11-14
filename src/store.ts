@@ -57,6 +57,12 @@ export interface JukeboxState {
   /** What the Explore cursor is over, in words. */
   probeText: string
   earTest: EarTestView
+  /** The intro overlay is showing; page shortcuts wait until it closes. */
+  introOpen: boolean
+  /** Counts needle drops, so the shelf can animate the stylus in time with the sound. */
+  dropId: number
+  /** A short visible caption for a sound cue (needle drop, intro drone), with when it started. */
+  cue: { text: string; at: number } | null
   /** High contrast theme on (C key). */
   highContrast: boolean
   /** What is sounding right now, for the visible caption bar. */
@@ -88,6 +94,9 @@ export const useJukebox = create<JukeboxState>((set) => ({
   cursor: { col: 32, row: 16, cols: 64, rows: 32 },
   probeText: '',
   highContrast: false,
+  introOpen: false,
+  dropId: 0,
+  cue: null,
   earTest: { phase: 'setup', difficulty: 'easy', index: 0, total: 0, score: 0, prompt: '', reveal: '', best: {} },
   sounding: '',
   knobs: {},

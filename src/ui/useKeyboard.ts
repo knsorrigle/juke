@@ -37,6 +37,7 @@ export function useKeyboard(player: JukeboxPlayer): void {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return
       const key = event.key
       if (handlesItsOwnKeys(event.target, key)) return
+      if (useJukebox.getState().introOpen) return // the intro handles its own keys
       const mode = useJukebox.getState().mode
       const exploring = mode === 'explore'
       const digit = /^Digit([1-4])$/.exec(event.code)

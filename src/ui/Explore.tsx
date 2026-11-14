@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { JukeboxPlayer } from '../player.ts'
 import { useJukebox } from '../store.ts'
 
@@ -43,8 +44,22 @@ export function Captions() {
   const sounding = useJukebox((s) => s.sounding)
   const said = useJukebox((s) => s.announcement.text)
   const mode = useJukebox((s) => s.mode)
+  const cue = useJukebox((s) => s.cue)
+  // A cue shows until 2.5 s after it started; the timer only records that it expired.
+  const [expired, setExpired] = useState<number | null>(null)
+  useEffect(() => {
+    if (!cue) return
+    const timer = window.setTimeout(() => setExpired(cue.at), 2500)
+    return () => window.clearTimeout(timer)
+  }, [cue])
+  const showCue = Boolean(cue && cue.at !== expired)
   return (
     <div className="captions" aria-hidden="true">
+      {showCue && cue ? (
+        <p>
+          <span className="cap-label">Cue</span> ♪ {cue.text}
+        </p>
+      ) : null}
       <p>
         <span className="cap-label">{mode === 'explore' ? 'Explore' : 'Sound'}</span> {sounding || 'Silent.'}
       </p>

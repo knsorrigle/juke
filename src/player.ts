@@ -211,6 +211,7 @@ export class JukeboxPlayer {
     this.resumeAfterLoad = keepPlaying
     this.resetAnalysis()
     this.engine.loadTrack(this.runner.instruments, this.knobs())
+    this.dropNeedle()
     useJukebox.getState().patch({
       trackId: track.id,
       status: 'loading',
@@ -669,12 +670,21 @@ export class JukeboxPlayer {
     }
     try {
       await video.play()
+      this.dropNeedle()
       // Hold the first date announcement back so it does not talk over this one.
       this.lastSpokenAt = performance.now() / 1000
       announce(`Playing ${this.track.title}.`)
     } catch {
       announce('The video could not be played.')
     }
+  }
+
+  /** The needle-drop cue: sound, a visible caption, and a signal for the stylus animation. */
+  private dropNeedle(): void {
+    if (!this.engine.isStarted) return
+    this.engine.needleDrop()
+    const state = useJukebox.getState()
+    state.patch({ dropId: state.dropId + 1, cue: { text: 'Needle drop', at: performance.now() } })
   }
 
   /** Keys 1-4: hear one instrument alone; the same key again restores all. */
