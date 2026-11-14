@@ -2,10 +2,10 @@ import { useJukebox } from '../store.ts'
 import { ACTIVITY } from '../tracks/activity.ts'
 
 /**
- * The scrubber's groove: one bar per second of video, as tall as that second
- * is busy (measured from the video beforehand). Each track's own quietest and
- * busiest seconds set the scale, so its busy and quiet stretches stand out.
- * Hidden from screen readers; the slider next to it is the control.
+ * The scrubber's groove: a vinyl strip with the track's activity as a mirrored
+ * waveform, one bar per second, as tall as that second is busy (measured from
+ * the video beforehand). Each track's own quietest and busiest seconds set the
+ * scale. Hidden from screen readers; the slider on top of it is the control.
  */
 export function Groove() {
   const trackId = useJukebox((s) => s.trackId)
@@ -17,16 +17,16 @@ export function Groove() {
   const hi = Math.max(...values)
   const played = duration ? time / duration : 0
   return (
-    <svg className="groove" viewBox={`0 0 ${values.length} 1`} preserveAspectRatio="none" aria-hidden="true">
+    <svg className="groove" viewBox={`0 0 ${values.length} 2`} preserveAspectRatio="none" aria-hidden="true">
       {values.map((v, i) => {
-        const h = 0.12 + 0.88 * (hi > lo ? (v - lo) / (hi - lo) : 0.5)
+        const h = 0.1 + 0.85 * (hi > lo ? (v - lo) / (hi - lo) : 0.5)
         return (
           <rect
             key={i}
-            x={i + 0.1}
+            x={i + 0.15}
             y={1 - h}
-            width={0.8}
-            height={h}
+            width={0.7}
+            height={2 * h}
             className={(i + 0.5) / values.length <= played ? 'played' : undefined}
           />
         )

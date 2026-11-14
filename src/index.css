@@ -392,12 +392,57 @@ kbd {
   flex: 1;
   display: flex;
   align-items: center;
+  height: 56px;
+  /* The vinyl strip: fine concentric-looking grooves. */
+  background:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 4px),
+    linear-gradient(to bottom, #0b0c10, #121419 50%, #0b0c10);
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .seek input {
+  position: relative;
   width: 100%;
-  min-block-size: 32px;
-  accent-color: var(--accent);
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.seek input::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+}
+
+.seek input::-moz-range-track {
+  height: 100%;
+  background: transparent;
+}
+
+/* The playhead is a stylus: a thin needle with a diamond head. */
+.seek input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 56px;
+  border: 0;
+  background:
+    linear-gradient(var(--accent), var(--accent)) center / 2px 100% no-repeat,
+    conic-gradient(from 45deg, var(--accent) 0 25%, transparent 0 50%, var(--accent) 0 75%, transparent 0) center 4px / 10px 10px no-repeat;
+}
+
+.seek input::-moz-range-thumb {
+  width: 14px;
+  height: 56px;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(var(--accent), var(--accent)) center / 2px 100% no-repeat;
+}
+
+.seek input:focus-visible {
+  outline-offset: 2px;
 }
 
 .clock {
@@ -408,21 +453,83 @@ kbd {
 
 .groove {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 50%;
+  inset: 8px 0;
   width: 100%;
-  height: 1.6rem;
+  height: calc(100% - 16px);
   pointer-events: none;
 }
 
 .groove rect {
-  fill: #3a3f4b;
+  fill: #444a57;
 }
 
 .groove rect.played {
   fill: var(--accent);
-  opacity: 0.6;
+}
+
+/* ------------------------------------------------------------ Halo and graticule */
+
+.viewport {
+  overflow: visible;
+}
+
+.halo {
+  position: absolute;
+  width: calc(100% + 72px);
+  height: calc(100% + 72px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.graticule {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tick {
+  position: absolute;
+  background: rgba(237, 232, 223, 0.55);
+}
+
+.tick.x {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background:
+    linear-gradient(rgba(237, 232, 223, 0.55), rgba(237, 232, 223, 0.55)) top / 1px 8px no-repeat,
+    linear-gradient(rgba(237, 232, 223, 0.55), rgba(237, 232, 223, 0.55)) bottom / 1px 8px no-repeat;
+}
+
+.tick.y {
+  left: 0;
+  right: 0;
+  height: 1px;
+  background:
+    linear-gradient(rgba(237, 232, 223, 0.55), rgba(237, 232, 223, 0.55)) left / 8px 1px no-repeat,
+    linear-gradient(rgba(237, 232, 223, 0.55), rgba(237, 232, 223, 0.55)) right / 8px 1px no-repeat;
+}
+
+.tick-label {
+  position: absolute;
+  font-size: max(16px, 0.75rem);
+  line-height: 1;
+  color: rgba(237, 232, 223, 0.8);
+  text-shadow: 0 0 3px #000, 0 0 6px #000;
+  white-space: nowrap;
+}
+
+.tick.x .tick-label {
+  bottom: 12px;
+  left: 0;
+  transform: translateX(-50%);
+}
+
+.tick.y .tick-label {
+  left: 12px;
+  top: 0;
+  transform: translateY(-50%);
 }
 
 /* ------------------------------------------------------------ Captions */
@@ -744,6 +851,10 @@ footer {
 
 .hc .groove rect {
   fill: #9a9a9a;
+}
+
+.hc .tick-label {
+  color: #fff;
 }
 
 .hc .groove rect.played {

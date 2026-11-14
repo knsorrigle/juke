@@ -6,6 +6,8 @@ import type { Track } from '../tracks/types.ts'
 import { Announcer } from './Announcer.tsx'
 import { DebugPanel } from './DebugPanel.tsx'
 import { EarTestCurtain, EarTestPanel } from './EarTest.tsx'
+import { Graticule } from './Graticule.tsx'
+import { Halo } from './halo/Halo.tsx'
 import { Captions, ExploreLayer } from './Explore.tsx'
 import { HudBottom, HudTop, ModeSwitch } from './Hud.tsx'
 import { Readout } from './Readout.tsx'
@@ -107,10 +109,12 @@ export default function App() {
                   if (v.videoWidth && v.videoHeight) setAspect(v.videoWidth / v.videoHeight)
                 }}
               />
+              <Graticule track={track} />
               <RippleCanvas />
               <ScanBeam />
               <ExploreLayer player={player} />
               <EarTestCurtain />
+              <Halo engine={player.engine} />
               <span className="crop tl" aria-hidden="true" />
               <span className="crop tr" aria-hidden="true" />
               <span className="crop bl" aria-hidden="true" />
