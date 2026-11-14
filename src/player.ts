@@ -28,6 +28,7 @@ import {
 import { describePlace } from './explore/place.ts'
 import { type CellPixels, PROBES, type ProbeResult } from './explore/probes.ts'
 import { formatSpokenTime } from './ui/format.ts'
+import { ripples } from './ui/ripples.ts'
 import { describeFrame } from './ui/describe.ts'
 
 /** Analysis frame width in pixels; height follows the video's shape. */
@@ -279,6 +280,7 @@ export class JukeboxPlayer {
         this.engine.playNotes(output.notes.map((n) => ({ ...n, at: offset + n.time + AUDIO_DELAY })))
         if (output.voices) this.engine.setVoices(output.voices)
       }
+      this.emitRipples(output.notes)
       const now = performance.now()
       for (const n of output.notes) {
         const list = this.recentNotes.get(n.voice) ?? []
@@ -321,6 +323,19 @@ export class JukeboxPlayer {
         },
         sounding: this.caption(playing),
       })
+    }
+  }
+
+  /** Show each note as a ripple on the video at the moment it sounds. */
+  private emitRipples(notes: { voice: string; time: number; x?: number; y?: number; velocity: number }[]): void {
+    const mediaNow = this.video?.currentTime ?? 0
+    const { solo } = useJukebox.getState()
+    for (const n of notes) {
+      if (n.x === undefined || n.y === undefined || (solo && solo !== n.voice)) continue
+      const color = this.runner.instruments.find((i) => i.id === n.voice)?.color ?? '#ffffff'
+      const delay = Math.max(0, (n.time - mediaNow + AUDIO_DELAY) * 1000)
+      const ripple = { x: n.x, y: n.y, color, velocity: n.velocity }
+      window.setTimeout(() => ripples.emit(ripple), delay)
     }
   }
 
@@ -568,6 +583,22 @@ export class JukeboxPlayer {
       .announce(
         `Round over: ${view.score} out of ${view.total} on ${view.difficulty}. Your best on ${view.difficulty} is ${best[view.difficulty]}. Space plays another round, 1 goes back to the music.`,
       )
+  }
+
+  /** H key: everything the HUD shows, in words. */
+  speakHud(): void {
+    const state = useJukebox.getState()
+    const modeName = { play: 'Play', explore: 'Explore', eartest: 'Ear Test' }[state.mode]
+    const parts = [`${modeName} mode, ${this.track.shortTitle}.`]
+    if (state.dateText) parts.push(`${state.dateText}.`)
+    if (state.mode === 'explore' && this.probe) {
+      const { x, y } = this.cursorCentre()
+      parts.push(`${this.probe.text} ${describePlace(x, y, this.track.geographic)}.`)
+    } else {
+      for (const [k, v] of Object.entries(state.readout?.info ?? {}).slice(0, 2)) parts.push(`${k}: ${v}.`)
+    }
+    parts.push(`Legend: ${this.track.legendShort.replaceAll(' = ', ' means ').replaceAll(' · ', '; ')}.`)
+    state.announce(parts.join(' '))
   }
 
   /** I key: what is under the cursor, and where. */

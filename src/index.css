@@ -465,3 +465,75 @@ footer {
   font-weight: 700;
   cursor: pointer;
 }
+
+.ripples {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hud p {
+  position: absolute;
+  margin: 0;
+  max-width: 48%;
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.25rem;
+  background: rgb(0 0 0 / 0.62);
+  font: 0.72rem/1.4 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: #e8edf5;
+  pointer-events: none;
+}
+
+.hud-tl {
+  top: 0.5rem;
+  left: 0.5rem;
+  color: var(--accent) !important;
+}
+
+.hud-tr {
+  top: 0.5rem;
+  right: 0.5rem;
+  text-align: right;
+}
+
+.hud-br {
+  right: 0.5rem;
+  bottom: 0.6rem;
+  text-align: right;
+}
+
+.hud-br span {
+  display: block;
+}
+
+.seek {
+  position: relative;
+  align-items: center;
+}
+
+.groove {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 50%;
+  width: 100%;
+  height: 1.6rem;
+  pointer-events: none;
+}
+
+.groove rect {
+  fill: #4a5268;
+}
+
+.groove rect.played {
+  fill: var(--accent);
+  opacity: 0.55;
+}
+
+@media (max-width: 34rem) {
+  .hud-tr {
+    display: none;
+  }
+}

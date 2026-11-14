@@ -6,6 +6,8 @@ import type { Track } from '../tracks/types.ts'
 import { Announcer } from './Announcer.tsx'
 import { DebugPanel } from './DebugPanel.tsx'
 import { EarTestCurtain, EarTestPanel } from './EarTest.tsx'
+import { Hud } from './Hud.tsx'
+import { RippleCanvas } from './RippleCanvas.tsx'
 import { Captions, ExploreLayer } from './Explore.tsx'
 import { Readout } from './Readout.tsx'
 import { TrackList } from './TrackList.tsx'
@@ -95,7 +97,9 @@ export default function App() {
               aria-describedby="track-alt"
               onClick={() => void player.toggle()}
             />
+            <RippleCanvas />
             <ScanBeam />
+            <Hud track={track} />
             <ExploreLayer player={player} />
             <DateBadge />
             <EarTestCurtain />
@@ -109,7 +113,7 @@ export default function App() {
             {loading ? 'Loading video. ' : ''}
             Keyboard: <kbd>Space</kbd> plays and pauses. <kbd>Left</kbd> and <kbd>Right</kbd> skip 5
             seconds. <kbd>L</kbd> explains the sounds. <kbd>F</kbd> describes the frame,{' '}
-            <kbd>G</kbd> in more detail. <kbd>2</kbd> explores the paused picture with a cursor:
+            <kbd>G</kbd> in more detail, <kbd>H</kbd> reads the corner readouts. <kbd>2</kbd> explores the paused picture with a cursor:
             arrows move it (with <kbd>Shift</kbd>, 10 at a time), <kbd>I</kbd> says what is under it,{' '}
             <kbd>1</kbd> or <kbd>Esc</kbd> goes back. <kbd>4</kbd> starts the Ear Test. Sound starts
             when you press play.
