@@ -6,7 +6,7 @@ import { getTrack, tracks } from '../tracks/index.ts'
 import type { Track } from '../tracks/types.ts'
 import { Announcer } from './Announcer.tsx'
 import { DebugPanel } from './DebugPanel.tsx'
-import { EarTestCurtain, EarTestPanel } from './EarTest.tsx'
+import { EarTestScreen } from './EarTest.tsx'
 import { Graticule } from './Graticule.tsx'
 import { Halo } from './halo/Halo.tsx'
 import { Captions, ExploreLayer } from './Explore.tsx'
@@ -53,6 +53,9 @@ export default function App() {
   const trackId = useJukebox((s) => s.trackId)
   const loading = useJukebox((s) => s.status === 'loading')
   const error = useJukebox((s) => s.error)
+  // While a full-screen layer is open, the page behind it is inert (no focus, no clicks).
+  // The live-region announcer stays outside, so screen readers still hear it.
+  const covered = useJukebox((s) => s.introOpen || s.mode === 'eartest')
   const track = getTrack(trackId) ?? tracks[0]
   // The screen keeps each video's own shape (2:1 maps, 16:9 globe and night lights).
   const [aspect, setAspect] = useState(2)
@@ -103,7 +106,7 @@ export default function App() {
       <a className="skip-link" href="#player">
         Skip to player
       </a>
-      <div className="console">
+      <div className="console" inert={covered}>
         <header className="masthead">
           <div className="brand">
             <h1>
@@ -137,7 +140,6 @@ export default function App() {
               <RippleCanvas />
               <ScanBeam />
               <ExploreLayer player={player} />
-              <EarTestCurtain />
               <Halo engine={player.engine} />
               <span className="crop tl" aria-hidden="true" />
               <span className="crop tr" aria-hidden="true" />
@@ -147,7 +149,6 @@ export default function App() {
             <HudBottom track={track} />
             <Transport player={player} />
             <Captions />
-            <EarTestPanel player={player} />
             {error ? (
               <p className="error" role="alert">
                 {error}
@@ -218,6 +219,7 @@ export default function App() {
         </div>
       </div>
 
+      <EarTestScreen player={player} />
       <Intro engine={player.engine} />
       <Announcer />
     </>

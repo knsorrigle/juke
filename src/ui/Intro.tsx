@@ -101,7 +101,6 @@ export function Intro({ engine }: { engine: AudioEngine }) {
       ref={overlay}
       className={`intro ${phase}`}
       role="dialog"
-      aria-modal="true"
       aria-labelledby="intro-title"
     >
       <div className="intro-inner">
