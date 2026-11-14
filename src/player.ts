@@ -2,6 +2,7 @@ import { analyzeFrame } from './analysis/features.ts'
 import { FrameSampler } from './analysis/frameSampler.ts'
 import type { FramePlanes, PixelFrame } from './analysis/types.ts'
 import { AudioEngine } from './audio/engine.ts'
+import { isDiscontinuity } from './mapping/clock.ts'
 import type { RulesetRunner } from './mapping/runner.ts'
 import type { TickSummary } from './mapping/types.ts'
 import { useJukebox } from './store.ts'
@@ -91,7 +92,13 @@ export class JukeboxPlayer {
       }),
       on('seeked', () => {
         set({ time: video.currentTime })
-        if (!video.paused) this.engine.setActive(true)
+        if (video.paused) {
+          // No frame callback is guaranteed here, so refresh the readout and date by hand.
+          this.resetAnalysis()
+          this.sampler?.sampleNow()
+        } else {
+          this.engine.setActive(true)
+        }
       }),
       on('timeupdate', () => set({ time: video.currentTime })),
       on('error', () => {
@@ -144,8 +151,7 @@ export class JukeboxPlayer {
   private onFrame(frame: PixelFrame, mediaTime: number): void {
     const video = this.video
     if (!video) return
-    const last = this.lastMediaTime
-    if (last !== null && (mediaTime < last - 0.001 || mediaTime - last > DISCONTINUITY)) {
+    if (isDiscontinuity(this.lastMediaTime, mediaTime, DISCONTINUITY)) {
       // A seek, a loop, or frames stopped arriving (a hidden tab): comparing against
       // the old frame would be meaningless, and the old hum level is stale.
       this.resetAnalysis()

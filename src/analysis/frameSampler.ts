@@ -61,6 +61,15 @@ export class FrameSampler {
     this.handler = null
   }
 
+  /**
+   * Sample whatever frame the video is showing right now. Browsers do not
+   * always deliver a frame callback after a seek while paused, so the caller
+   * asks for one explicitly.
+   */
+  sampleNow(): void {
+    this.sample(this.video.currentTime)
+  }
+
   private schedule(): void {
     if (!this.handler) return
     if (this.usingVideoFrames) {

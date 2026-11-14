@@ -11,6 +11,7 @@ import {
   frameDifference,
   hueHistogram,
 } from './features.ts'
+import { downscaleSteps } from './frameSampler.ts'
 import { BLACK, GREY, WHITE, YELLOW, paintRect, solidFrame } from './testFrames.ts'
 
 const W = 160
@@ -266,5 +267,20 @@ describe('masks', () => {
     const planes = computePlanes(solidFrame(4, 1, YELLOW), 'yellow', mask)
     expect(Array.from(planes.signal.slice(0, 2))).toEqual([0, 0])
     expect(planes.signal[2]).toBeGreaterThan(0.8)
+  })
+})
+
+describe('downscale steps', () => {
+  it('shrinks a 1440x720 video to 160x80 in steps of at most about 2x', () => {
+    expect(downscaleSteps(1440, 720, 160)).toEqual([
+      { width: 640, height: 320 },
+      { width: 320, height: 160 },
+      { width: 160, height: 80 },
+    ])
+  })
+
+  it('keeps the video shape and never returns an empty list', () => {
+    expect(downscaleSteps(1280, 720, 160).at(-1)).toEqual({ width: 160, height: 90 })
+    expect(downscaleSteps(100, 50, 160)).toEqual([{ width: 160, height: 80 }])
   })
 })

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { FrameFeatures, RisingPixel } from '../analysis/types.ts'
-import { tickDuration, tickIndexAt, tickTime } from './clock.ts'
+import { isDiscontinuity, tickDuration, tickIndexAt, tickTime } from './clock.ts'
 import {
   FULL_GLOBE,
   latitudeToPosition,
@@ -126,6 +126,22 @@ describe('musical clock', () => {
   it('is a pure function of video time, so seeking lands on the same grid', () => {
     expect(tickIndexAt(42.5, CLOCK)).toBe(tickIndexAt(42.5, CLOCK))
     expect(tickIndexAt(-1, CLOCK)).toBe(0)
+  })
+})
+
+describe('seek and loop detection', () => {
+  it('treats the next frame as continuous', () => {
+    expect(isDiscontinuity(null, 0)).toBe(false)
+    expect(isDiscontinuity(10, 10.033)).toBe(false)
+    expect(isDiscontinuity(10, 10.4)).toBe(false) // a few dropped frames
+    expect(isDiscontinuity(10, 10)).toBe(false) // the same frame sampled twice
+  })
+
+  it('flags a loop back to the start, a seek back and a seek forward', () => {
+    expect(isDiscontinuity(100.05, 0.0)).toBe(true)
+    expect(isDiscontinuity(30, 25)).toBe(true)
+    expect(isDiscontinuity(30, 35)).toBe(true)
+    expect(isDiscontinuity(30, 31)).toBe(true) // frames stopped arriving for a second
   })
 })
 

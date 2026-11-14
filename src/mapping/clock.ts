@@ -22,3 +22,13 @@ export function tickIndexAt(time: number, clock: Clock): number {
 export function tickTime(index: number, clock: Clock): number {
   return index * tickDuration(clock)
 }
+
+/**
+ * True if video time did not simply move on to the next frame: it went
+ * backwards (a loop or a seek back) or jumped ahead by more than `maxGap`
+ * seconds (a seek forward, or frames stopped arriving for a while).
+ */
+export function isDiscontinuity(lastTime: number | null, time: number, maxGap = 0.5): boolean {
+  if (lastTime === null) return false
+  return time < lastTime - 0.001 || time - lastTime > maxGap
+}
