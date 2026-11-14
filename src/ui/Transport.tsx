@@ -38,17 +38,3 @@ export function Transport({ player }: { player: JukeboxPlayer }) {
     </div>
   )
 }
-
-/** The date of the frame on screen, drawn over the video. Not a live region. */
-export function DateBadge() {
-  const dateText = useJukebox((s) => s.dateText)
-  const dateCorrected = useJukebox((s) => s.dateCorrected)
-  if (!dateText) return null
-  return (
-    <p className="date">
-      <span className="visually-hidden">Date shown: </span>
-      {dateText}
-      {dateCorrected ? <span className="date-note"> (year corrected, see credits)</span> : null}
-    </p>
-  )
-}
