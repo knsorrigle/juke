@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { frameLoop } from './frameLoop.ts'
 import type { Knobs } from '../mapping/types.ts'
 import { useJukebox } from '../store.ts'
 
@@ -16,6 +17,16 @@ export function DebugPanel() {
   const knobs = useJukebox((s) => s.knobs[s.trackId])
   const setKnob = useJukebox((s) => s.setKnob)
   const [copied, setCopied] = useState(false)
+  const [fps, setFps] = useState(0)
+  useEffect(() => {
+    // Keep the loop alive so fps is measured even when nothing else is drawing.
+    const stop = frameLoop.subscribe(() => {})
+    const timer = window.setInterval(() => setFps(frameLoop.fps()), 500)
+    return () => {
+      stop()
+      window.clearInterval(timer)
+    }
+  }, [])
   if (!knobs) return null
   const copy = async () => {
     try {
@@ -28,6 +39,9 @@ export function DebugPanel() {
   return (
     <section aria-labelledby="debug-title" className="debug">
       <h2 id="debug-title">Tuning: {trackId}</h2>
+      <p className="label">
+        Frame rate: <output>{Math.round(fps)} fps</output>
+      </p>
       {RANGES.map((r) => (
         <label key={r.key} className="knob">
           <span>

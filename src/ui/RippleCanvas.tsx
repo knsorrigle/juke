@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { frameLoop } from './frameLoop.ts'
 import { type Ripple, ripples } from './ripples.ts'
 
 const POOL = 64
@@ -21,16 +22,23 @@ export function RippleCanvas() {
     if (!canvas || !ctx) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
     const live: Live[] = []
-    let frame = 0
-    const draw = () => {
-      frame = 0
-      const { clientWidth: w, clientHeight: h } = canvas
+    let width = 0
+    let height = 0
+    let stop: (() => void) | null = null
+    // Measure only on resize, never inside the draw loop.
+    const resize = () => {
       const dpr = window.devicePixelRatio || 1
-      if (canvas.width !== Math.round(w * dpr)) canvas.width = Math.round(w * dpr)
-      if (canvas.height !== Math.round(h * dpr)) canvas.height = Math.round(h * dpr)
+      width = canvas.clientWidth
+      height = canvas.clientHeight
+      canvas.width = Math.round(width * dpr)
+      canvas.height = Math.round(height * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.clearRect(0, 0, w, h)
-      const now = performance.now()
+    }
+    const observer = new ResizeObserver(resize)
+    observer.observe(canvas)
+    resize()
+    const draw = (now: number) => {
+      ctx.clearRect(0, 0, width, height)
       for (let i = live.length - 1; i >= 0; i--) {
         const r = live[i]
         const age = (now - r.born) / LIFE_MS
@@ -42,25 +50,30 @@ export function RippleCanvas() {
         ctx.strokeStyle = ctx.fillStyle = r.color
         ctx.beginPath()
         if (reduced.matches) {
-          ctx.arc(r.x * w, r.y * h, 3, 0, Math.PI * 2)
+          ctx.arc(r.x * width, r.y * height, 3, 0, Math.PI * 2)
           ctx.fill()
         } else {
           ctx.lineWidth = 1.5
-          ctx.arc(r.x * w, r.y * h, 3 + age * (12 + 22 * r.velocity), 0, Math.PI * 2)
+          ctx.arc(r.x * width, r.y * height, 3 + age * (12 + 22 * r.velocity), 0, Math.PI * 2)
           ctx.stroke()
         }
       }
       ctx.globalAlpha = 1
-      if (live.length) frame = requestAnimationFrame(draw)
+      // Leave the shared loop when there is nothing left to draw.
+      if (!live.length && stop) {
+        stop()
+        stop = null
+      }
     }
     const unsubscribe = ripples.subscribe((r) => {
       if (live.length >= POOL) live.shift()
       live.push({ ...r, born: performance.now() })
-      if (!frame) frame = requestAnimationFrame(draw)
+      if (!stop) stop = frameLoop.subscribe(draw)
     })
     return () => {
       unsubscribe()
-      if (frame) cancelAnimationFrame(frame)
+      stop?.()
+      observer.disconnect()
     }
   }, [])
   return <canvas ref={ref} className="ripples" aria-hidden="true" />
