@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { contrastRatio, cssVariables } from './contrast.ts'
+import { ACCENT_INK, COLORS, TRACK_ACCENTS } from './tokens.ts'
 
 const css = readFileSync(new URL('../../index.css', import.meta.url), 'utf8')
 const base = cssVariables(css, ':root')
@@ -35,5 +36,20 @@ describe('colour contrast of the real stylesheet (WCAG 2.1 AA)', () => {
   it('makes the high contrast theme at least as strong for body text', () => {
     const hc = themes['high contrast']
     expect(contrastRatio(hc.text, hc.bg)).toBeGreaterThanOrEqual(contrastRatio(base.text, base.bg))
+  })
+  it('gives every track an accent that reads as text and carries ink on it', () => {
+    for (const [track, accent] of Object.entries(TRACK_ACCENTS)) {
+      expect(contrastRatio(accent, base.bg), `${track} on bg`).toBeGreaterThanOrEqual(4.5)
+      expect(contrastRatio(accent, base.panel), `${track} on panel`).toBeGreaterThanOrEqual(4.5)
+      expect(contrastRatio(ACCENT_INK, accent), `ink on ${track}`).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it('keeps the tokens file and the stylesheet in step', () => {
+    expect(base.bg).toBe(COLORS.bg)
+    expect(base.panel).toBe(COLORS.panel)
+    expect(base.text).toBe(COLORS.text)
+    expect(base.muted).toBe(COLORS.secondary)
+    expect(base.line).toBe(COLORS.line)
   })
 })
