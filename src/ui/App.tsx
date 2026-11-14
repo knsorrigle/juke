@@ -5,6 +5,7 @@ import { getTrack, tracks } from '../tracks/index.ts'
 import type { Track } from '../tracks/types.ts'
 import { Announcer } from './Announcer.tsx'
 import { DebugPanel } from './DebugPanel.tsx'
+import { Captions, ExploreLayer } from './Explore.tsx'
 import { Readout } from './Readout.tsx'
 import { TrackList } from './TrackList.tsx'
 import { DateBadge, Transport } from './Transport.tsx'
@@ -27,7 +28,8 @@ function SoloStatus({ player }: { player: JukeboxPlayer }) {
   if (!instruments.length) return null
   return (
     <p className="hint">
-      Instruments: {instruments.map((i, n) => `${n + 1} ${i.label}`).join(', ')}.{' '}
+      Instruments (Shift and a number to hear one alone):{' '}
+      {instruments.map((i, n) => `${n + 1} ${i.label}`).join(', ')}.{' '}
       {solo ? (
         <strong>Solo: {instruments.find((i) => i.id === solo)?.label}.</strong>
       ) : (
@@ -93,15 +95,20 @@ export default function App() {
               onClick={() => void player.toggle()}
             />
             <ScanBeam />
+            <ExploreLayer player={player} />
             <DateBadge />
           </div>
+          <Captions />
 
           <Transport player={player} />
 
           <p className="hint">
             {loading ? 'Loading video. ' : ''}
-            Keyboard: <kbd>Space</kbd> plays and pauses. <kbd>Left</kbd> and <kbd>Right</kbd> arrows
-            skip 5 seconds. <kbd>L</kbd> explains the sounds. Sound starts when you press play.
+            Keyboard: <kbd>Space</kbd> plays and pauses. <kbd>Left</kbd> and <kbd>Right</kbd> skip 5
+            seconds. <kbd>L</kbd> explains the sounds. <kbd>F</kbd> describes the frame,{' '}
+            <kbd>G</kbd> in more detail. <kbd>2</kbd> explores the paused picture with a cursor:
+            arrows move it (with <kbd>Shift</kbd>, 10 at a time), <kbd>I</kbd> says what is under it,{' '}
+            <kbd>1</kbd> or <kbd>Esc</kbd> goes back. Sound starts when you press play.
           </p>
           <SoloStatus player={player} />
           {error ? (

@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import type { Knobs } from './mapping/types.ts'
 
+export type Mode = 'play' | 'explore'
+
 export type PlayerStatus = 'loading' | 'ready' | 'playing' | 'paused' | 'error'
 
 /** A snapshot of the analysis and audio state for the on-screen readout. */
@@ -35,6 +37,13 @@ export interface JukeboxState {
   readout: Readout | null
   /** Horizontal position (0..1) of the scanner beam, or null when there is none. */
   scanX: number | null
+  mode: Mode
+  /** Explore cursor, in cells of the explore grid. */
+  cursor: { col: number; row: number; cols: number; rows: number }
+  /** What the Explore cursor is over, in words. */
+  probeText: string
+  /** What is sounding right now, for the visible caption bar. */
+  sounding: string
   /** Instrument heard alone, or null for all. */
   solo: string | null
   /** By-ear tuning per track id. */
@@ -58,6 +67,10 @@ export const useJukebox = create<JukeboxState>((set) => ({
   readout: null,
   scanX: null,
   solo: null,
+  mode: 'play',
+  cursor: { col: 32, row: 16, cols: 64, rows: 32 },
+  probeText: '',
+  sounding: '',
   knobs: {},
   announcement: { id: 0, text: '' },
   error: null,

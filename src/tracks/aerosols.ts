@@ -23,7 +23,7 @@ export const aerosols: Track = {
   // by colour: it has no saturation, so it matches no aerosol type.
   masks: [{ x: 0.665, y: 0.895, width: 0.225, height: 0.09 }],
   legend: [
-    'Four instruments, one per aerosol type. Press 1 to 4 to hear one alone, and the same key again to hear them all.',
+    'Four instruments, one per aerosol type. Hold Shift and press 1 to 4 to hear one alone, and the same keys again to hear them all.',
     '1. Black carbon (orange-red smoke from fires): a low, warm brass chord.',
     '2. Dust (lilac): an airy, breathy whistle.',
     '3. Sea salt (grey-blue): soft bells.',

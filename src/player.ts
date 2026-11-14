@@ -1,6 +1,6 @@
 import { analyzeFrame } from './analysis/features.ts'
-import { FrameSampler } from './analysis/frameSampler.ts'
-import type { FramePlanes, PixelFrame } from './analysis/types.ts'
+import { FrameSampler, downscaleSteps } from './analysis/frameSampler.ts'
+import type { FrameFeatures, FramePlanes, PixelFrame } from './analysis/types.ts'
 import { AudioEngine } from './audio/engine.ts'
 import { isDiscontinuity, smoothOffset } from './mapping/clock.ts'
 import type { RulesetRunner } from './mapping/runner.ts'
@@ -14,7 +14,10 @@ import {
   parseLabels,
 } from './tracks/labels.ts'
 import type { TimeDescription, Track } from './tracks/types.ts'
+import { describePlace } from './explore/place.ts'
+import { type CellPixels, PROBES, type ProbeResult } from './explore/probes.ts'
 import { formatSpokenTime } from './ui/format.ts'
+import { describeFrame } from './ui/describe.ts'
 
 /** Analysis frame width in pixels; height follows the video's shape. */
 const ANALYSIS_WIDTH = 160
@@ -28,6 +31,10 @@ const AUDIO_DELAY = 0.06
 const DISCONTINUITY = 0.5
 const READOUT_INTERVAL_MS = 120
 const SEEK_STEP = 5
+/** Explore grid: this many cells across; rows follow the video's shape. */
+const EXPLORE_COLS = 64
+/** Width the paused frame is captured at for Explore (5 pixels per cell). */
+const EXPLORE_WIDTH = 320
 
 /**
  * Glue between the layers: video frames -> analysis -> mapping -> audio, plus
@@ -51,6 +58,13 @@ export class JukeboxPlayer {
   private info: Record<string, string> = {}
   private analysisMs = 0
   private resumeAfterLoad = false
+  private lastFeatures: FrameFeatures | null = null
+  private exploreFrame: PixelFrame | null = null
+  private exploreCanvases: { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D }[] = []
+  private probe: ProbeResult | null = null
+  /** Recent note times per instrument, for the caption bar. */
+  private recentNotes = new Map<string, number[]>()
+  private voiceLevels = new Map<string, number>()
 
   constructor(track: Track) {
     this.track = track
@@ -124,6 +138,7 @@ export class JukeboxPlayer {
           // No frame callback is guaranteed here, so refresh the readout and date by hand.
           this.resetAnalysis()
           this.sampler?.sampleNow()
+          if (useJukebox.getState().mode === 'explore') this.captureExplore()
         } else {
           this.engine.setActive(true)
         }
@@ -171,6 +186,7 @@ export class JukeboxPlayer {
    */
   selectTrack(track: Track, keepPlaying: boolean): void {
     if (track.id === this.track.id) return
+    this.exitExplore(false)
     this.track = track
     this.runner = track.createRunner()
     this.ensureKnobs()
@@ -237,6 +253,7 @@ export class JukeboxPlayer {
     })
     this.prev = planes
     this.lastMediaTime = mediaTime
+    this.lastFeatures = features
 
     const playing = !video.paused && !video.seeking
     let scanX: number | null = null
@@ -248,6 +265,13 @@ export class JukeboxPlayer {
         this.engine.playNotes(output.notes.map((n) => ({ ...n, at: offset + n.time + AUDIO_DELAY })))
         if (output.voices) this.engine.setVoices(output.voices)
       }
+      const now = performance.now()
+      for (const n of output.notes) {
+        const list = this.recentNotes.get(n.voice) ?? []
+        list.push(now)
+        this.recentNotes.set(n.voice, list)
+      }
+      if (output.voices) for (const [id, v] of Object.entries(output.voices)) this.voiceLevels.set(id, v.level)
       if (output.info) this.info = output.info
       scanX = output.scanX ?? null
       if (output.announce) useJukebox.getState().announce(output.announce)
@@ -281,8 +305,174 @@ export class JukeboxPlayer {
           notesTotal: level.notes,
           exactFrames: this.sampler?.exactFrames ?? false,
         },
+        sounding: this.caption(playing),
       })
     }
+  }
+
+  /** What is sounding, in words, for the visible caption bar. */
+  private caption(playing: boolean): string {
+    const state = useJukebox.getState()
+    if (state.mode === 'explore') {
+      return this.probe ? `Explore tone: ${this.probe.text}` : 'Explore: move the cursor.'
+    }
+    if (!playing) return 'Silent: paused.'
+    if (!state.audioOn) return 'Sound is off until you press play.'
+    const now = performance.now()
+    const parts: string[] = []
+    for (const inst of this.runner.instruments) {
+      if (state.solo && state.solo !== inst.id) continue
+      const times = (this.recentNotes.get(inst.id) ?? []).filter((t) => now - t < 2000)
+      this.recentNotes.set(inst.id, times)
+      if (times.length) parts.push(`${inst.label}: ${Math.round(times.length / 2)} notes a second`)
+      const level = this.voiceLevels.get(inst.id)
+      if (level !== undefined && level > 0.04) parts.push(`${inst.label}: ${Math.round(level * 100)}%`)
+    }
+    return parts.length ? parts.join(' · ') : 'Quiet: nothing to sound right now.'
+  }
+
+  // ---------------------------------------------------------------- Explore
+
+  /** Pause and explore the frame on screen with a cursor. Starts sound if needed. */
+  async enterExplore(): Promise<void> {
+    const video = this.video
+    if (!video) return
+    if (!video.paused) video.pause()
+    try {
+      await this.engine.start()
+      useJukebox.getState().patch({ audioOn: true })
+    } catch {
+      useJukebox.getState().announce('Sound could not be started in this browser.')
+    }
+    const rows = Math.max(1, Math.round((EXPLORE_COLS * (video.videoHeight || 1)) / (video.videoWidth || 2)))
+    const { cursor } = useJukebox.getState()
+    const col = Math.min(EXPLORE_COLS - 1, Math.round((cursor.col / cursor.cols) * EXPLORE_COLS))
+    const row = Math.min(rows - 1, Math.round((cursor.row / cursor.rows) * rows))
+    useJukebox.getState().patch({ mode: 'explore', cursor: { col, row, cols: EXPLORE_COLS, rows } })
+    this.captureExplore()
+    useJukebox
+      .getState()
+      .announce(
+        `Explore. Arrow keys move the cursor, Shift and an arrow moves 10. I says what is under it, F describes the frame. ${this.probe ? this.probe.text : ''} Press 1 or Space to play again.`,
+      )
+  }
+
+  /** Back to Play mode, paused where it was. */
+  exitExplore(announce = true): void {
+    if (useJukebox.getState().mode !== 'explore') return
+    this.engine.setExplore(null)
+    this.probe = null
+    useJukebox.getState().patch({ mode: 'play', probeText: '' })
+    if (announce) useJukebox.getState().announce('Play mode. Press Space to play.')
+  }
+
+  /** Draw the paused frame at Explore resolution. */
+  private captureExplore(): void {
+    const video = this.video
+    if (!video || !video.videoWidth) return
+    const steps = downscaleSteps(video.videoWidth, video.videoHeight, EXPLORE_WIDTH)
+    if (this.exploreCanvases.length !== steps.length || this.exploreCanvases.at(-1)?.canvas.height !== steps.at(-1)!.height) {
+      this.exploreCanvases = steps.map((size, i) => {
+        const canvas = document.createElement('canvas')
+        canvas.width = size.width
+        canvas.height = size.height
+        const ctx = canvas.getContext('2d', { willReadFrequently: i === steps.length - 1 })!
+        ctx.imageSmoothingQuality = 'high'
+        return { canvas, ctx }
+      })
+    }
+    let source: CanvasImageSource = video
+    for (const { canvas, ctx } of this.exploreCanvases) {
+      ctx.drawImage(source, 0, 0, canvas.width, canvas.height)
+      source = canvas
+    }
+    const last = this.exploreCanvases.at(-1)!
+    const image = last.ctx.getImageData(0, 0, last.canvas.width, last.canvas.height)
+    this.exploreFrame = { data: image.data, width: image.width, height: image.height }
+    this.updateProbe()
+  }
+
+  /** Move the Explore cursor by whole cells. */
+  moveCursor(dCol: number, dRow: number): void {
+    const { cursor } = useJukebox.getState()
+    const col = Math.min(cursor.cols - 1, Math.max(0, cursor.col + dCol))
+    const row = Math.min(cursor.rows - 1, Math.max(0, cursor.row + dRow))
+    if (col === cursor.col && row === cursor.row) {
+      useJukebox.getState().announce('Edge of the picture.')
+      return
+    }
+    useJukebox.getState().patch({ cursor: { ...cursor, col, row } })
+    this.updateProbe()
+  }
+
+  /** Put the Explore cursor at a point (0..1 from the top-left), e.g. from a pointer. */
+  setCursorAt(x: number, y: number): void {
+    const { cursor } = useJukebox.getState()
+    const col = Math.min(cursor.cols - 1, Math.max(0, Math.floor(x * cursor.cols)))
+    const row = Math.min(cursor.rows - 1, Math.max(0, Math.floor(y * cursor.rows)))
+    if (col === cursor.col && row === cursor.row) return
+    useJukebox.getState().patch({ cursor: { ...cursor, col, row } })
+    this.updateProbe()
+  }
+
+  private cursorCentre(): { x: number; y: number } {
+    const { cursor } = useJukebox.getState()
+    return { x: (cursor.col + 0.5) / cursor.cols, y: (cursor.row + 0.5) / cursor.rows }
+  }
+
+  private updateProbe(): void {
+    const frame = this.exploreFrame
+    if (!frame) return
+    const { cursor } = useJukebox.getState()
+    const { x, y } = this.cursorCentre()
+    const masked = this.track.masks.some((m) => x >= m.x && x <= m.x + m.width && y >= m.y && y <= m.y + m.height)
+    let result: ProbeResult
+    if (masked) {
+      result = { value: null, text: 'A label on the picture, not data.', noData: 'noise' }
+    } else {
+      const x0 = Math.floor((cursor.col / cursor.cols) * frame.width)
+      const x1 = Math.max(x0 + 1, Math.floor(((cursor.col + 1) / cursor.cols) * frame.width))
+      const y0 = Math.floor((cursor.row / cursor.rows) * frame.height)
+      const y1 = Math.max(y0 + 1, Math.floor(((cursor.row + 1) / cursor.rows) * frame.height))
+      const pixels: CellPixels = []
+      for (let py = y0; py < y1; py++) {
+        for (let px = x0; px < x1; px++) {
+          const p = (py * frame.width + px) * 4
+          pixels.push([frame.data[p], frame.data[p + 1], frame.data[p + 2]])
+        }
+      }
+      result = PROBES[this.track.id](pixels, this.video?.currentTime ?? 0)
+    }
+    this.probe = result
+    this.engine.setExplore({
+      midi: 48 + 36 * Math.min(1, Math.max(0, result.value ?? 0)),
+      pan: (x - 0.5) * 2,
+      sound: result.value === null ? (result.noData ?? 'silence') : 'tone',
+    })
+    useJukebox.getState().patch({ probeText: result.text, sounding: `Explore tone: ${result.text}` })
+  }
+
+  /** I key: what is under the cursor, and where. */
+  speakProbe(): void {
+    if (useJukebox.getState().mode !== 'explore' || !this.probe) {
+      useJukebox.getState().announce('Press 2 to explore the picture first.')
+      return
+    }
+    const { x, y } = this.cursorCentre()
+    useJukebox.getState().announce(`${this.probe.text} ${describePlace(x, y, this.track.geographic)}.`)
+  }
+
+  /** F (short) or G (detailed): what is on screen, with numbers from the analysis. */
+  speakFrame(detailed: boolean): void {
+    const features = this.lastFeatures
+    if (!features) {
+      useJukebox.getState().announce('No frame yet.')
+      return
+    }
+    // A fresh copy of the rules reads this one frame without disturbing playback.
+    const info = this.track.createRunner().step(features, this.video?.currentTime ?? 0, this.knobs()).info ?? {}
+    const live = Object.keys(info).length ? info : (useJukebox.getState().readout?.info ?? {})
+    useJukebox.getState().announce(describeFrame(this.track, features, useJukebox.getState().dateText, live, detailed))
   }
 
   /** What to show and say about the moment on screen. */
@@ -320,6 +510,7 @@ export class JukeboxPlayer {
       announce(`Paused at ${formatSpokenTime(video.currentTime)}.`)
       return
     }
+    this.exitExplore(false)
     try {
       await this.engine.start()
       patch({ audioOn: true })
@@ -351,7 +542,7 @@ export class JukeboxPlayer {
     const next = solo === target.id ? null : target.id
     this.engine.setSolo(next)
     patch({ solo: next })
-    announce(next ? `Solo: ${target.label}. Press ${index + 1} again to hear everything.` : 'All instruments.')
+    announce(next ? `Solo: ${target.label}. Press Shift and ${index + 1} again to hear everything.` : 'All instruments.')
   }
 
   /** Speak the plain-language legend. */
