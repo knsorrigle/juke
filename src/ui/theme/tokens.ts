@@ -24,6 +24,15 @@ export const TRACK_ACCENTS: Record<string, string> = {
   co2: '#ff6b4a', // high-CO2 orange-red
 }
 
+/** Record-label colours for each track's disc, from its legend. */
+export const TRACK_LABEL_COLORS: Record<string, string[]> = {
+  lightning: ['#ffd43b', '#e8b400'],
+  aerosols: ['#d4624a', '#c49be0', '#8aaeaa', '#55e03b'], // carbon, dust, salt, sulfate
+  'sea-surface-currents': ['#3366f3', '#3cf075', '#fcf020', '#f70018'], // 0 C to 32 C
+  'night-lights': ['#ffb347', '#a070e0', '#e09040'], // lights, new, lights out
+  co2: ['#e8c88a', '#e47a2c', '#e5281a'], // 425 to 458 ppm
+}
+
 /** Text drawn on an accent-coloured surface. */
 export const ACCENT_INK = '#06070a'
 
