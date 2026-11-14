@@ -85,8 +85,7 @@ export class JukeboxPlayer {
       on('pause', () => {
         set({ status: 'paused', time: video.currentTime })
         this.engine.setActive(false)
-        this.runner?.reset()
-        this.clockOffset = null
+        this.resetAnalysis()
       }),
       on('waiting', () => this.engine.setActive(false)),
       on('seeking', () => {
@@ -149,7 +148,10 @@ export class JukeboxPlayer {
     this.prev = null
     this.lastMediaTime = null
     this.clockOffset = null
+    this.lastTick = null
+    this.padLevel = 0
     this.runner?.reset()
+    this.engine.setPad(0)
   }
 
   private onFrame(frame: PixelFrame, mediaTime: number): void {
@@ -159,8 +161,6 @@ export class JukeboxPlayer {
       // A seek, a loop, or frames stopped arriving (a hidden tab): comparing against
       // the old frame would be meaningless, and the old hum level is stale.
       this.resetAnalysis()
-      this.engine.setPad(0)
-      this.padLevel = 0
     }
 
     const started = performance.now()
