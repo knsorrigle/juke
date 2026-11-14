@@ -2,7 +2,7 @@ import { analyzeFrame } from './analysis/features.ts'
 import { FrameSampler } from './analysis/frameSampler.ts'
 import type { FramePlanes, PixelFrame } from './analysis/types.ts'
 import { AudioEngine } from './audio/engine.ts'
-import { isDiscontinuity } from './mapping/clock.ts'
+import { isDiscontinuity, smoothOffset } from './mapping/clock.ts'
 import type { RulesetRunner } from './mapping/runner.ts'
 import type { TickSummary } from './mapping/types.ts'
 import { useJukebox } from './store.ts'
@@ -44,6 +44,8 @@ export class JukeboxPlayer {
   private runner: RulesetRunner | null
   private prev: FramePlanes | null = null
   private lastMediaTime: number | null = null
+  /** Smoothed (audio clock - video time), so notes follow an even timeline. */
+  private clockOffset: number | null = null
   private labels: (DateLabel | null)[] = []
   private lastMonth: string | null = null
   private lastMonthAt = -Infinity
@@ -84,6 +86,7 @@ export class JukeboxPlayer {
         set({ status: 'paused', time: video.currentTime })
         this.engine.setActive(false)
         this.runner?.reset()
+        this.clockOffset = null
       }),
       on('waiting', () => this.engine.setActive(false)),
       on('seeking', () => {
@@ -145,6 +148,7 @@ export class JukeboxPlayer {
   private resetAnalysis(): void {
     this.prev = null
     this.lastMediaTime = null
+    this.clockOffset = null
     this.runner?.reset()
   }
 
@@ -171,10 +175,11 @@ export class JukeboxPlayer {
     if (playing && this.runner) {
       const output = this.runner.step(features, mediaTime)
       if (this.engine.isStarted) {
-        const now = this.engine.currentTime()
+        const offset = smoothOffset(this.clockOffset, this.engine.currentTime() - mediaTime)
+        this.clockOffset = offset
         this.engine.playNotes(
           output.notes.map((n) => ({
-            at: now + AUDIO_DELAY + (n.time - mediaTime),
+            at: offset + n.time + AUDIO_DELAY,
             midi: n.midi,
             pan: n.pan,
             velocity: n.velocity,

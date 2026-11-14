@@ -32,3 +32,20 @@ export function isDiscontinuity(lastTime: number | null, time: number, maxGap = 
   if (lastTime === null) return false
   return time < lastTime - 0.001 || time - lastTime > maxGap
 }
+
+/**
+ * Track the offset between the audio clock and video time (audio = video +
+ * offset). Each frame gives one noisy sample, because frames are shown on the
+ * display's refresh ticks rather than at their exact time. Averaging the
+ * samples keeps the musical pulse even; a large jump (a stall or a seek)
+ * replaces the estimate outright.
+ */
+export function smoothOffset(
+  previous: number | null,
+  sample: number,
+  alpha = 0.05,
+  resyncAbove = 0.1,
+): number {
+  if (previous === null || Math.abs(sample - previous) > resyncAbove) return sample
+  return previous + (sample - previous) * alpha
+}

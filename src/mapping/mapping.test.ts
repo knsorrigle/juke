@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { FrameFeatures, RisingPixel } from '../analysis/types.ts'
-import { isDiscontinuity, tickDuration, tickIndexAt, tickTime } from './clock.ts'
+import { isDiscontinuity, smoothOffset, tickDuration, tickIndexAt, tickTime } from './clock.ts'
 import {
   FULL_GLOBE,
   latitudeToPosition,
@@ -142,6 +142,24 @@ describe('seek and loop detection', () => {
     expect(isDiscontinuity(30, 25)).toBe(true)
     expect(isDiscontinuity(30, 35)).toBe(true)
     expect(isDiscontinuity(30, 31)).toBe(true) // frames stopped arriving for a second
+  })
+})
+
+describe('audio to video clock offset', () => {
+  it('starts from the first sample and resyncs after a large jump', () => {
+    expect(smoothOffset(null, 12.3)).toBe(12.3)
+    expect(smoothOffset(12.3, 14.0)).toBe(14.0)
+  })
+
+  it('averages out refresh-rate jitter of about 16 ms', () => {
+    let offset: number | null = null
+    let worst = 0
+    for (let i = 0; i < 300; i++) {
+      // Frames alternately appear on time and one display refresh late.
+      offset = smoothOffset(offset, 5 + (i % 2 ? 0.0167 : 0))
+      if (i > 60) worst = Math.max(worst, Math.abs(offset - 5.00835))
+    }
+    expect(worst).toBeLessThan(0.001)
   })
 })
 
