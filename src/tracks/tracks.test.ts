@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { co2DateAt, describeCo2 } from './co2.ts'
+import { ACTIVITY } from './activity.ts'
 import { tracks } from './index.ts'
 import { describeNightLights } from './nightLights.ts'
 
@@ -38,5 +39,16 @@ describe('Night Lights parts from the timecode', () => {
     expect(describeNightLights(8).text).toBe('2023')
     expect(describeNightLights(12)).toMatchObject({ key: 'change', urgent: true })
     expect(describeNightLights(21).text).toBe('2012')
+  })
+})
+
+describe('scrubber activity', () => {
+  it('has one value per second of each video, between 0 and 1', () => {
+    const seconds: Record<string, number> = { lightning: 101, aerosols: 74, 'sea-surface-currents': 67, 'night-lights': 22, co2: 40 }
+    for (const t of tracks) {
+      expect(ACTIVITY[t.id]).toHaveLength(seconds[t.id])
+      expect(ACTIVITY[t.id].every((v) => v >= 0 && v <= 1)).toBe(true)
+      expect(t.legendShort.length).toBeGreaterThan(20)
+    }
   })
 })

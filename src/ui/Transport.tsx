@@ -1,6 +1,7 @@
 import type { JukeboxPlayer } from '../player.ts'
 import { useJukebox } from '../store.ts'
 import { formatClock, formatSpokenTime } from './format.ts'
+import { Groove } from './Groove.tsx'
 
 /** Play / pause button, position slider and clock. Subscribes to the fast-changing time itself. */
 export function Transport({ player }: { player: JukeboxPlayer }) {
@@ -18,6 +19,7 @@ export function Transport({ player }: { player: JukeboxPlayer }) {
         {status === 'playing' ? 'Pause' : 'Play'}
       </button>
       <label className="seek">
+        <Groove />
         <span className="visually-hidden">Position in track</span>
         <input
           type="range"
