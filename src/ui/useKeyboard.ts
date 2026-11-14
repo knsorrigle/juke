@@ -24,7 +24,7 @@ const ARROWS: Record<string, [number, number]> = {
 
 /**
  * Page-wide shortcuts, following the blueprint:
- * 1 Play mode, 2 Explore mode (3 and 4 are reserved for later modes);
+ * 1 Play mode, 2 Explore mode, 4 Ear Test (3, the Scanner mode, is not built);
  * Shift+1 to 4 solo an instrument; Space play/pause; arrows seek in Play mode
  * and move the cursor in Explore mode (Shift for 10 cells); I says what is
  * under the cursor; F and G describe the frame; L explains the sounds; Escape
@@ -36,8 +36,23 @@ export function useKeyboard(player: JukeboxPlayer): void {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return
       const key = event.key
       if (handlesItsOwnKeys(event.target, key)) return
-      const exploring = useJukebox.getState().mode === 'explore'
+      const mode = useJukebox.getState().mode
+      const exploring = mode === 'explore'
       const digit = /^Digit([1-4])$/.exec(event.code)
+
+      if (mode === 'eartest') {
+        // The Ear Test owns Space, the arrows, 1 and Escape while it is open.
+        if (key === ' ') {
+          event.preventDefault()
+          if (!event.repeat) player.earSpace()
+        } else if (key === 'ArrowLeft' || key === 'ArrowRight') {
+          event.preventDefault()
+          if (!event.repeat) player.answer(key === 'ArrowLeft' ? 'left' : 'right')
+        } else if (key === 'Escape' || (digit && digit[1] === '1' && !event.shiftKey)) {
+          player.exitEarTest()
+        }
+        return
+      }
 
       if (digit && event.shiftKey) {
         if (!event.repeat) player.toggleSolo(Number(digit[1]) - 1)
@@ -49,6 +64,8 @@ export function useKeyboard(player: JukeboxPlayer): void {
           else useJukebox.getState().announce('Play mode. Press Space to play or pause.')
         } else if (n === 2) {
           if (!exploring) void player.enterExplore()
+        } else if (n === 4) {
+          void player.enterEarTest()
         } else {
           useJukebox.getState().announce(`Mode ${n} is not built yet.`)
         }

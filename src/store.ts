@@ -1,7 +1,21 @@
 import { create } from 'zustand'
+import type { Difficulty } from './eartest/questions.ts'
 import type { Knobs } from './mapping/types.ts'
 
-export type Mode = 'play' | 'explore'
+export type Mode = 'play' | 'explore' | 'eartest'
+
+export interface EarTestView {
+  phase: 'setup' | 'asking' | 'revealed' | 'done'
+  difficulty: Difficulty
+  index: number
+  total: number
+  score: number
+  /** The question, with no hint of the answer. */
+  prompt: string
+  /** Shown and spoken after answering. */
+  reveal: string
+  best: Partial<Record<Difficulty, number>>
+}
 
 export type PlayerStatus = 'loading' | 'ready' | 'playing' | 'paused' | 'error'
 
@@ -42,6 +56,7 @@ export interface JukeboxState {
   cursor: { col: number; row: number; cols: number; rows: number }
   /** What the Explore cursor is over, in words. */
   probeText: string
+  earTest: EarTestView
   /** What is sounding right now, for the visible caption bar. */
   sounding: string
   /** Instrument heard alone, or null for all. */
@@ -70,6 +85,7 @@ export const useJukebox = create<JukeboxState>((set) => ({
   mode: 'play',
   cursor: { col: 32, row: 16, cols: 64, rows: 32 },
   probeText: '',
+  earTest: { phase: 'setup', difficulty: 'easy', index: 0, total: 0, score: 0, prompt: '', reveal: '', best: {} },
   sounding: '',
   knobs: {},
   announcement: { id: 0, text: '' },

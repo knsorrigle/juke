@@ -409,3 +409,59 @@ footer {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+.curtain {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #05070b;
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+.ear-test {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.5rem;
+  background: var(--panel);
+}
+
+.ear-test fieldset {
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  margin: 0 0 1rem;
+}
+
+.radio {
+  display: block;
+  min-block-size: 2rem;
+}
+
+.prompt {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.reveal {
+  font-size: 1.05rem;
+}
+
+.answer-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.answer-row button {
+  min-inline-size: 7rem;
+  min-block-size: 3rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}

@@ -13,7 +13,18 @@ import {
   labelAt,
   parseLabels,
 } from './tracks/labels.ts'
+import { getTrack } from './tracks/index.ts'
 import type { TimeDescription, Track } from './tracks/types.ts'
+import { MOMENT_SETS } from './eartest/moments.ts'
+import {
+  type Difficulty,
+  type Question,
+  type Side,
+  loadBest,
+  makeRound,
+  revealText,
+  saveBest,
+} from './eartest/questions.ts'
 import { describePlace } from './explore/place.ts'
 import { type CellPixels, PROBES, type ProbeResult } from './explore/probes.ts'
 import { formatSpokenTime } from './ui/format.ts'
@@ -65,6 +76,8 @@ export class JukeboxPlayer {
   /** Recent note times per instrument, for the caption bar. */
   private recentNotes = new Map<string, number[]>()
   private voiceLevels = new Map<string, number>()
+  private round: Question[] = []
+  private toneTimer = 0
 
   constructor(track: Track) {
     this.track = track
@@ -187,6 +200,7 @@ export class JukeboxPlayer {
   selectTrack(track: Track, keepPlaying: boolean): void {
     if (track.id === this.track.id) return
     this.exitExplore(false)
+    this.exitEarTest(false)
     this.track = track
     this.runner = track.createRunner()
     this.ensureKnobs()
@@ -452,6 +466,110 @@ export class JukeboxPlayer {
     useJukebox.getState().patch({ probeText: result.text, sounding: `Explore tone: ${result.text}` })
   }
 
+  // ---------------------------------------------------------------- Ear Test
+
+  private earView() {
+    return useJukebox.getState().earTest
+  }
+
+  private setEar(partial: Partial<ReturnType<JukeboxPlayer['earView']>>) {
+    useJukebox.getState().patch({ earTest: { ...this.earView(), ...partial } })
+  }
+
+  /** Key 4: a listening quiz. Pauses the track; nothing on screen hints at the answer. */
+  async enterEarTest(): Promise<void> {
+    const video = this.video
+    if (video && !video.paused) video.pause()
+    this.exitExplore(false)
+    try {
+      await this.engine.start()
+      useJukebox.getState().patch({ audioOn: true })
+    } catch {
+      useJukebox.getState().announce('Sound could not be started in this browser.')
+      return
+    }
+    this.engine.setActive(false)
+    const best = loadBest(typeof localStorage === 'undefined' ? undefined : localStorage)
+    useJukebox.getState().patch({ mode: 'eartest', sounding: 'Ear Test: waiting to start.' })
+    this.setEar({ phase: 'setup', index: 0, total: 0, score: 0, prompt: '', reveal: '', best })
+    useJukebox
+      .getState()
+      .announce(
+        `Ear Test. Eight questions. Each plays two tones, left ear then right; a higher tone means more. Answer with the Left or Right arrow. Choose easy, medium or hard, then press Space to start. Current: ${this.earView().difficulty}.`,
+      )
+  }
+
+  exitEarTest(announce = true): void {
+    if (useJukebox.getState().mode !== 'eartest') return
+    window.clearTimeout(this.toneTimer)
+    useJukebox.getState().patch({ mode: 'play', sounding: '' })
+    if (announce) useJukebox.getState().announce('Play mode. Press Space to play.')
+  }
+
+  setDifficulty(difficulty: Difficulty): void {
+    this.setEar({ difficulty })
+    useJukebox.getState().announce(`${difficulty[0].toUpperCase()}${difficulty.slice(1)}.`)
+  }
+
+  startRound(): void {
+    const { difficulty } = this.earView()
+    this.round = makeRound(MOMENT_SETS, difficulty, Math.random)
+    this.setEar({ phase: 'asking', index: 0, total: this.round.length, score: 0, reveal: '' })
+    this.askQuestion()
+  }
+
+  private askQuestion(): void {
+    const { index, total } = this.earView()
+    const q = this.round[index]
+    const prompt = `Question ${index + 1} of ${total}. Which has ${q.ask} ${q.set.question}: left or right?`
+    this.setEar({ phase: 'asking', prompt, reveal: '' })
+    useJukebox.getState().announce(`${prompt} Space plays the tones again.`)
+    // Give the screen reader a moment to speak before the tones.
+    window.clearTimeout(this.toneTimer)
+    this.toneTimer = window.setTimeout(() => this.playTones(), 2600)
+  }
+
+  /** Play the two tones: left ear, then right. */
+  playTones(): void {
+    const q = this.round[this.earView().index]
+    if (!q || useJukebox.getState().mode !== 'eartest') return
+    this.engine.playTestTone(q.leftMidi, -1, 0.05, 0.9)
+    this.engine.playTestTone(q.rightMidi, 1, 1.25, 0.9)
+    useJukebox.getState().patch({ sounding: 'Ear Test: left tone, then right tone.' })
+  }
+
+  answer(side: Side): void {
+    const view = this.earView()
+    const q = this.round[view.index]
+    if (view.phase !== 'asking' || !q) return
+    window.clearTimeout(this.toneTimer)
+    const right = side === q.correct
+    const score = view.score + (right ? 1 : 0)
+    const title = getTrack(q.set.trackId)?.shortTitle ?? q.set.trackId
+    const reveal = `${right ? 'Correct.' : `Not quite: it was ${q.correct}.`} ${revealText(q, title)}`
+    const last = view.index + 1 >= view.total
+    this.setEar({ phase: 'revealed', score, reveal })
+    useJukebox.getState().announce(`${reveal} ${last ? 'Press Space for your score.' : 'Press Space for the next question.'}`)
+  }
+
+  /** Space in the Ear Test: start, replay the tones, or move on. */
+  earSpace(): void {
+    const view = this.earView()
+    if (view.phase === 'setup' || view.phase === 'done') return this.startRound()
+    if (view.phase === 'asking') return this.playTones()
+    if (view.index + 1 < view.total) {
+      this.setEar({ index: view.index + 1 })
+      return this.askQuestion()
+    }
+    const best = saveBest(typeof localStorage === 'undefined' ? undefined : localStorage, view.difficulty, view.score)
+    this.setEar({ phase: 'done', best, prompt: '' })
+    useJukebox
+      .getState()
+      .announce(
+        `Round over: ${view.score} out of ${view.total} on ${view.difficulty}. Your best on ${view.difficulty} is ${best[view.difficulty]}. Space plays another round, 1 goes back to the music.`,
+      )
+  }
+
   /** I key: what is under the cursor, and where. */
   speakProbe(): void {
     if (useJukebox.getState().mode !== 'explore' || !this.probe) {
@@ -511,6 +629,7 @@ export class JukeboxPlayer {
       return
     }
     this.exitExplore(false)
+    this.exitEarTest(false)
     try {
       await this.engine.start()
       patch({ audioOn: true })

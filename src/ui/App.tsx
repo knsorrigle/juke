@@ -5,6 +5,7 @@ import { getTrack, tracks } from '../tracks/index.ts'
 import type { Track } from '../tracks/types.ts'
 import { Announcer } from './Announcer.tsx'
 import { DebugPanel } from './DebugPanel.tsx'
+import { EarTestCurtain, EarTestPanel } from './EarTest.tsx'
 import { Captions, ExploreLayer } from './Explore.tsx'
 import { Readout } from './Readout.tsx'
 import { TrackList } from './TrackList.tsx'
@@ -97,8 +98,10 @@ export default function App() {
             <ScanBeam />
             <ExploreLayer player={player} />
             <DateBadge />
+            <EarTestCurtain />
           </div>
           <Captions />
+          <EarTestPanel player={player} />
 
           <Transport player={player} />
 
@@ -108,7 +111,8 @@ export default function App() {
             seconds. <kbd>L</kbd> explains the sounds. <kbd>F</kbd> describes the frame,{' '}
             <kbd>G</kbd> in more detail. <kbd>2</kbd> explores the paused picture with a cursor:
             arrows move it (with <kbd>Shift</kbd>, 10 at a time), <kbd>I</kbd> says what is under it,{' '}
-            <kbd>1</kbd> or <kbd>Esc</kbd> goes back. Sound starts when you press play.
+            <kbd>1</kbd> or <kbd>Esc</kbd> goes back. <kbd>4</kbd> starts the Ear Test. Sound starts
+            when you press play.
           </p>
           <SoloStatus player={player} />
           {error ? (
