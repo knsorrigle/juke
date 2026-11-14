@@ -27,7 +27,7 @@ const ARROWS: Record<string, [number, number]> = {
  * 1 Play mode, 2 Explore mode, 4 Ear Test (3, the Scanner mode, is not built);
  * Shift+1 to 4 solo an instrument; Space play/pause; arrows seek in Play mode
  * and move the cursor in Explore mode (Shift for 10 cells); I says what is
- * under the cursor; F and G describe the frame; L explains the sounds; Escape
+ * under the cursor; F and G describe the frame; H reads the HUD; L explains the sounds; Escape
  * leaves Explore mode.
  */
 export function useKeyboard(player: JukeboxPlayer): void {
@@ -90,6 +90,7 @@ export function useKeyboard(player: JukeboxPlayer): void {
         else if (lower === 'i') player.speakProbe()
         else if (lower === 'f') player.speakFrame(false)
         else if (lower === 'g') player.speakFrame(true)
+        else if (lower === 'h') player.speakHud()
       }
     }
     window.addEventListener('keydown', onKeyDown)

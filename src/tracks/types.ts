@@ -59,6 +59,8 @@ export interface Track {
   masks: MaskRect[]
   /** Plain-language lines explaining what each sound means. */
   legend: string[]
+  /** The legend in one short line, for the HUD. */
+  legendShort: string
   /** Per-frame dates from a file (Lightning). */
   timeLabels: TimeLabels | null
   /** Dates or parts worked out from the video time (other tracks). */

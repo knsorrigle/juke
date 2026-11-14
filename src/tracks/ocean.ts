@@ -18,6 +18,7 @@ export const seaSurfaceCurrents: Track = {
   // Measured against the lightning map's coastlines: 180 W to 180 E, 89 N to 90 S.
   geographic: { x: true, y: true, lon: [-180, 180], lat: [89, -90] },
   masks: [],
+  legendShort: 'pitch = water temperature · brighter = faster currents · beam = scanner',
   legend: [
     'Eight soft held notes, one for each band of latitude from north to south. Warmer water plays a higher note, so the tropics sit high and the polar seas sit low and dark.',
     'When the water in a band moves fast, with currents and eddies, its note gets brighter and shimmers.',

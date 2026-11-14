@@ -42,6 +42,7 @@ export const co2: Track = {
   geographic: { x: false, y: false },
   // The date stamp, measured over the whole clip: x 0.805-0.981, y 0.943-0.963, plus a margin.
   masks: [{ x: 0.79, y: 0.93, width: 0.2, height: 0.045 }],
+  legendShort: 'drone above reference = more CO2 · wobble = day and night',
   legend: [
     'Two drones. A quiet, steady one is the reference: roughly where the colour scale turns from pale to orange, around 415 parts per million.',
     'The main drone rises above it, opens up and gets louder the more orange and red, high carbon dioxide, is in view. Listen to it pull away from the reference over industrial Asia and the fires of Africa and South America, and sink back over the oceans.',

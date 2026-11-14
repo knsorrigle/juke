@@ -47,6 +47,7 @@ export const nightLights: Track = {
   geographic: { x: true, y: true, lon: [-180, 180], lat: [91.5, -92.5] },
   // Year label and change legend, measured over the whole clip.
   masks: [{ x: 0.005, y: 0.49, width: 0.175, height: 0.115 }],
+  legendShort: 'chord = world lights · rising bell = new lights · falling tone = lights out',
   legend: [
     'Two parts. First, 2012 to 2023, one year about every 0.6 seconds: a chord that grows fuller and brighter as the world gets brighter, and a scanner sweeping west to east every 4 seconds that plays more bell notes over brightly lit places.',
     'Then, from about 10 seconds, the map of change: where lights are new, a bell rises; where lights went out, a low tone falls. Places with no change are silent. Left and right is west to east, so growth in Asia rises on your right and loss in Europe falls near the middle.',

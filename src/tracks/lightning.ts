@@ -23,6 +23,7 @@ export const lightning: Track = {
   projection: 'equirectangular',
   geographic: { x: true, y: true, lon: [-180, 180], lat: [90, -90] },
   masks: [],
+  legendShort: 'note = new lightning · left-right = west-east · high = north · hum = total',
   legend: [
     'Each soft mallet note is a cluster of new lightning. A steady pulse plays up to three notes at a time, for the biggest clusters since the last pulse.',
     'Left and right: where the lightning is, west to east. The Americas are on your left, Africa in the middle, Asia and Australia on your right.',

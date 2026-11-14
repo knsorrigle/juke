@@ -22,6 +22,7 @@ export const aerosols: Track = {
   // The in-frame legend box, bottom right. White annotation text is ignored
   // by colour: it has no saturation, so it matches no aerosol type.
   masks: [{ x: 0.665, y: 0.895, width: 0.225, height: 0.09 }],
+  legendShort: 'brass = smoke · breath = dust · bells = sea salt · plucks = sulfate',
   legend: [
     'Four instruments, one per aerosol type. Hold Shift and press 1 to 4 to hear one alone, and the same keys again to hear them all.',
     '1. Black carbon (orange-red smoke from fires): a low, warm brass chord.',
