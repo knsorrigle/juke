@@ -109,6 +109,7 @@ export class AudioEngine {
   private master: Tone.Gain | null = null
   private reverb: Tone.Reverb | null = null
   private meter: Tone.Meter | null = null
+  private analyser: Tone.Analyser | null = null
   private rig: Rig | null = null
   private pending: { instruments: InstrumentSpec[]; knobs: Knobs } | null = null
   private active = false
@@ -148,6 +149,9 @@ export class AudioEngine {
     this.master = new Tone.Gain(0.9).connect(compressor)
     this.meter = new Tone.Meter({ smoothing: 0.5 })
     limiter.connect(this.meter)
+    // Spectrum for the halo, read after the limiter. It only listens; the sound is unchanged.
+    this.analyser = new Tone.Analyser({ type: 'fft', size: 1024, smoothing: 0.5 })
+    limiter.connect(this.analyser)
     this.reverb = new Tone.Reverb({ decay: 3.2, preDelay: 0.02, wet: 1 }).connect(this.master)
     await this.reverb.ready
     this.started = true
@@ -373,6 +377,13 @@ export class AudioEngine {
   setActive(active: boolean): void {
     this.active = active
     this.rig?.hum.gain.rampTo(active ? 1 : 0, active ? 0.15 : RAMP)
+  }
+
+  /** The output spectrum in decibels per bin, and the sample rate; null before sound starts. */
+  spectrum(): { db: Float32Array; sampleRate: number } | null {
+    if (!this.analyser) return null
+    const value = this.analyser.getValue()
+    return { db: value instanceof Float32Array ? value : value[0], sampleRate: this.analyser.context.sampleRate }
   }
 
   /** Output level after the limiter, in dBFS, and the highest level seen so far. */
