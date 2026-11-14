@@ -2,6 +2,7 @@ import type { JukeboxPlayer } from '../player.ts'
 import { useJukebox } from '../store.ts'
 import { formatClock, formatSpokenTime } from './format.ts'
 import { Groove } from './Groove.tsx'
+import { Rolling } from './Rolling.tsx'
 
 /** Play / pause button, position slider and clock. Subscribes to the fast-changing time itself. */
 export function Transport({ player }: { player: JukeboxPlayer }) {
@@ -33,7 +34,7 @@ export function Transport({ player }: { player: JukeboxPlayer }) {
         />
       </label>
       <span className="clock" aria-hidden="true">
-        {formatClock(time)} / {formatClock(duration)}
+        <Rolling text={`${formatClock(time)} / ${formatClock(duration)}`} minInterval={0} />
       </span>
     </div>
   )

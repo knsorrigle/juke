@@ -1,6 +1,7 @@
 import type { JukeboxPlayer } from '../player.ts'
 import { useJukebox } from '../store.ts'
 import type { Track } from '../tracks/types.ts'
+import { Rolling } from './Rolling.tsx'
 
 const MODE_NAMES = { play: 'Play', explore: 'Explore', eartest: 'Ear Test' } as const
 
@@ -20,7 +21,7 @@ export function HudTop({ track }: { track: Track }) {
       {dateText ? (
         <p className="hud-date">
           <span className="visually-hidden">Date shown: </span>
-          {dateText}
+          <Rolling text={dateText} />
           {dateCorrected ? <span className="date-note">year corrected, see credits</span> : null}
         </p>
       ) : null}
@@ -45,7 +46,15 @@ export function HudBottom({ track }: { track: Track }) {
   return (
     <div className="hud-row bottom" aria-hidden="true">
       <p className="hud-values">
-        {values.length ? values.map((v) => <span key={v}>{v}</span>) : <span>Press play.</span>}
+        {values.length ? (
+          values.map((v, i) => (
+            <span key={i}>
+              <Rolling text={v} />
+            </span>
+          ))
+        ) : (
+          <span>Press play.</span>
+        )}
       </p>
       <p className="hud-legend">{track.legendShort}</p>
     </div>
