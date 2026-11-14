@@ -1,0 +1,303 @@
+:root {
+  color-scheme: dark;
+  --bg: #0a0d13;
+  --panel: #131824;
+  --line: #2a3142;
+  --text: #eef1f6;
+  --muted: #a9b2c3;
+  --accent: #ffd43b;
+  --accent-ink: #1a1400;
+  --focus: #7cc4ff;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-size: 112.5%;
+  line-height: 1.55;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#root {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+
+h1 {
+  font-size: 1.9rem;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 1.35rem;
+}
+
+h3 {
+  font-size: 1rem;
+  margin-top: 1.5rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+p {
+  margin: 0 0 0.75rem;
+}
+
+a {
+  color: var(--accent);
+}
+
+.site-header {
+  margin-bottom: 2rem;
+}
+
+.site-header p,
+.lede,
+.muted {
+  color: var(--muted);
+}
+
+section {
+  margin-bottom: 2.5rem;
+}
+
+section:focus {
+  outline: none;
+}
+
+.stage {
+  position: relative;
+  background: #000;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.stage video {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: pointer;
+}
+
+.date {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.6rem;
+  margin: 0;
+  padding: 0.15rem 0.6rem;
+  border-radius: 0.3rem;
+  background: rgb(0 0 0 / 0.72);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.date-note {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.8em;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0 0.75rem;
+}
+
+.play {
+  min-inline-size: 6.5rem;
+  min-block-size: 3rem;
+  padding: 0.5rem 1.25rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.play:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.seek {
+  flex: 1;
+  display: flex;
+}
+
+.seek input {
+  width: 100%;
+  min-block-size: 2rem;
+  accent-color: var(--accent);
+}
+
+.clock {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+:where(a, button, input, summary):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+kbd {
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 0.3rem;
+  background: var(--panel);
+  font: inherit;
+  font-size: 0.9em;
+}
+
+.error {
+  color: #ffb4a8;
+  font-weight: 600;
+}
+
+.legend {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.legend li {
+  margin-bottom: 0.5rem;
+}
+
+.readout {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+
+.readout dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 0.6rem 2rem;
+}
+
+.readout dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.readout dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1.25rem;
+}
+
+.charts figure {
+  margin: 0;
+}
+
+.charts figcaption {
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 4rem;
+  padding: 0 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.bars span {
+  flex: 1;
+  min-height: 1px;
+  background: var(--accent);
+  border-radius: 1px 1px 0 0;
+}
+
+footer {
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.4rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+}
+
+@media (max-width: 34rem) {
+  .controls {
+    flex-wrap: wrap;
+  }
+
+  .seek {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .play {
+    border: 1px solid ButtonText;
+  }
+}
