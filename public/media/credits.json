@@ -1,0 +1,87 @@
+{
+  "source": "NASA Scientific Visualization Studio (SVS), https://svs.gsfc.nasa.gov",
+  "retrieved": "2026-11-14",
+  "processing": "Videos re-encoded with ffmpeg to H.264 (yuv420p, 30 fps, 1-second keyframes), 720 px high, audio removed. Content is otherwise unmodified.",
+  "items": [
+    {
+      "id": "night-lights",
+      "file": "night-lights.mp4",
+      "title": "Change in Night Lights between 2012 and 2023 - EIC Version",
+      "svsId": 5313,
+      "url": "https://svs.gsfc.nasa.gov/5313/",
+      "credit": "NASA's Scientific Visualization Studio",
+      "dataCredit": "Black Marble (Suomi NPP VIIRS). NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA GSFC.",
+      "sourceFile": "https://svs.gsfc.nasa.gov/vis/a000000/a005300/a005313/nightlights_flat_series_and_change_wZooms_13_EIC_2160p30_h265.mp4",
+      "sourceResolution": "7680x2160",
+      "encoded": { "width": 2560, "height": 720, "fps": 30, "durationSeconds": 43.33 },
+      "notes": "The only video on the page is 7680x2160 (32:9); no 1080p version is offered."
+    },
+    {
+      "id": "lightning-flat",
+      "file": "lightning-flat.mp4",
+      "title": "Lightning Events Detected from the International Space Station (ISS) 2017-2023",
+      "svsId": 5011,
+      "url": "https://svs.gsfc.nasa.gov/5011/",
+      "credit": "NASA's Scientific Visualization Studio",
+      "sourceFile": "https://svs.gsfc.nasa.gov/vis/a000000/a005000/a005011/iss_lightning_sos_yearly_07312023_2048p60.mp4",
+      "sourceResolution": "4096x2048 at 60 fps",
+      "encoded": { "width": 1440, "height": 720, "fps": 30, "durationSeconds": 100.1 },
+      "labelsFile": "lightning-flat.labels.txt",
+      "labelsSource": "https://svs.gsfc.nasa.gov/vis/a000000/a005000/a005011/labels.txt",
+      "notes": "Science On a Sphere (flat equirectangular) version. Source is larger than 1080p; frame rate halved from 60 to 30 fps. labels.txt is NASA's per-frame date list for the 60 fps source, copied unmodified."
+    },
+    {
+      "id": "lightning-globe",
+      "file": "lightning-globe.mp4",
+      "title": "Lightning Events Detected from the International Space Station (ISS) 2017-2023",
+      "svsId": 5011,
+      "url": "https://svs.gsfc.nasa.gov/5011/",
+      "credit": "NASA's Scientific Visualization Studio",
+      "sourceFile": "https://svs.gsfc.nasa.gov/vis/a000000/a005000/a005011/iss_lightning_sphere_07312023.mp4",
+      "sourceResolution": "1920x1080",
+      "encoded": { "width": 1280, "height": 720, "fps": 30, "durationSeconds": 216.7 },
+      "notes": "Rendered rotating-globe version (the page's 1080p download). Alternative to lightning-flat; keep only one."
+    },
+    {
+      "id": "aerosols",
+      "file": "aerosols-still.png",
+      "title": "GEOS Aerosols (2025)",
+      "svsId": 5669,
+      "url": "https://svs.gsfc.nasa.gov/5669/",
+      "credit": "NASA's Global Modeling Assimilation Office (GMAO) and NASA's Scientific Visualization Studio (SVS)",
+      "sourceFile": "https://svs.gsfc.nasa.gov/vis/a000000/a005600/a005669/Aerosols_2025-08-19T20_00_00_1920x1080.png",
+      "sourceResolution": "1920x1080",
+      "encoded": { "width": 1280, "height": 720, "still": true },
+      "legendFile": "legends/aerosols-colorbar.png",
+      "legendSource": "https://svs.gsfc.nasa.gov/vis/a000000/a005600/a005669/Aerosols_cbar.png",
+      "notes": "This page offers still images only: no video and no frame set."
+    },
+    {
+      "id": "sea-surface-currents",
+      "file": "sea-surface-currents.mp4",
+      "title": "Global Sea Surface Currents and Temperature",
+      "svsId": 3912,
+      "url": "https://svs.gsfc.nasa.gov/3912/",
+      "credit": "NASA/Goddard Space Flight Center Scientific Visualization Studio",
+      "sourceFile": "https://svs.gsfc.nasa.gov/vis/a000000/a003900/a003912/ecco2_sst_flow.mp4",
+      "sourceResolution": "2048x1024",
+      "encoded": { "width": 1440, "height": 720, "fps": 30, "durationSeconds": 66.7 },
+      "legendFile": "legends/sea-surface-temp-colorbar.png",
+      "legendSource": "https://svs.gsfc.nasa.gov/vis/a000000/a003900/a003912/sst_ecco2_cbar.png",
+      "notes": "Fine flow lines are visibly softened by the 15 MB size cap."
+    },
+    {
+      "id": "co2",
+      "file": "co2.mp4",
+      "title": "DYAMOND Global Carbon Dioxide",
+      "svsId": 5196,
+      "url": "https://svs.gsfc.nasa.gov/5196/",
+      "credit": "NASA's Scientific Visualization Studio",
+      "sourceFile": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005196/dyamondPointCloud_12-1-2023b_dyamond_co2_anim_globe_orbit_1080p30_h265.mp4",
+      "sourceResolution": "1920x1080",
+      "encoded": { "width": 1280, "height": 720, "fps": 30, "durationSeconds": 39.2 },
+      "legendFile": "legends/co2-colorbar.png",
+      "legendSource": "https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005196/dyamondCbar_6-27-2024a.png"
+    }
+  ]
+}
