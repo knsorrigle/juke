@@ -28,3 +28,4 @@ dist-ssr
 
 # Vercel CLI link
 .vercel
+.env*
