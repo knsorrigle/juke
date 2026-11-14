@@ -79,6 +79,7 @@ export class JukeboxPlayer {
   private voiceLevels = new Map<string, number>()
   private round: Question[] = []
   private toneTimer = 0
+  private padTimers: number[] = []
 
   constructor(track: Track) {
     this.track = track
@@ -538,7 +539,7 @@ export class JukeboxPlayer {
     const { index, total } = this.earView()
     const q = this.round[index]
     const prompt = `Question ${index + 1} of ${total}. Which has ${q.ask} ${q.set.question}: left or right?`
-    this.setEar({ phase: 'asking', prompt, reveal: '' })
+    this.setEar({ phase: 'asking', prompt, reveal: '', moments: null })
     useJukebox.getState().announce(`${prompt} Space plays the tones again.`)
     // Give the screen reader a moment to speak before the tones.
     window.clearTimeout(this.toneTimer)
@@ -551,6 +552,11 @@ export class JukeboxPlayer {
     if (!q || useJukebox.getState().mode !== 'eartest') return
     this.engine.playTestTone(q.leftMidi, -1, 0.05, 0.9)
     this.engine.playTestTone(q.rightMidi, 1, 1.25, 0.9)
+    // Light each pad while its tone sounds.
+    this.padTimers.forEach((t) => window.clearTimeout(t))
+    const at = (ms: number, lit: 'left' | 'right' | null) =>
+      window.setTimeout(() => this.setEar({ lit }), ms)
+    this.padTimers = [at(50, 'left'), at(950, null), at(1250, 'right'), at(2150, null)]
     useJukebox.getState().patch({ sounding: 'Ear Test: left tone, then right tone.' })
   }
 
@@ -564,7 +570,20 @@ export class JukeboxPlayer {
     const title = getTrack(q.set.trackId)?.shortTitle ?? q.set.trackId
     const reveal = `${right ? 'Correct.' : `Not quite: it was ${q.correct}.`} ${revealText(q, title)}`
     const last = view.index + 1 >= view.total
-    this.setEar({ phase: 'revealed', score, reveal })
+    this.padTimers.forEach((t) => window.clearTimeout(t))
+    this.setEar({
+      phase: 'revealed',
+      score,
+      reveal,
+      lit: null,
+      moments: {
+        trackId: q.set.trackId,
+        left: { time: q.left.time, label: q.left.label },
+        right: { time: q.right.time, label: q.right.label },
+        correct: q.correct,
+        answered: side,
+      },
+    })
     useJukebox.getState().announce(`${reveal} ${last ? 'Press Space for your score.' : 'Press Space for the next question.'}`)
   }
 

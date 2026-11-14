@@ -14,6 +14,16 @@ export interface EarTestView {
   prompt: string
   /** Shown and spoken after answering. */
   reveal: string
+  /** Which pad's tone is sounding right now. */
+  lit: 'left' | 'right' | null
+  /** After answering: the two moments, for the reveal screen and the groove marks. */
+  moments: {
+    trackId: string
+    left: { time: number; label: string }
+    right: { time: number; label: string }
+    correct: 'left' | 'right'
+    answered: 'left' | 'right'
+  } | null
   best: Partial<Record<Difficulty, number>>
 }
 
@@ -97,7 +107,7 @@ export const useJukebox = create<JukeboxState>((set) => ({
   introOpen: false,
   dropId: 0,
   cue: null,
-  earTest: { phase: 'setup', difficulty: 'easy', index: 0, total: 0, score: 0, prompt: '', reveal: '', best: {} },
+  earTest: { phase: 'setup', difficulty: 'easy', index: 0, total: 0, score: 0, prompt: '', reveal: '', best: {}, lit: null, moments: null },
   sounding: '',
   knobs: {},
   announcement: { id: 0, text: '' },
