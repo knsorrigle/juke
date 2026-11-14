@@ -186,9 +186,12 @@ kbd {
   font-size: 0.875rem;
 }
 
-/* Mode switches: hardware-style segmented control. */
+/* Mode switches: hardware-style rocker switches with an indicator light and the key. */
 .modes {
   display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #0a0b0f;
   border: 1px solid var(--line);
 }
 
@@ -198,9 +201,8 @@ kbd {
   gap: var(--s1);
   min-block-size: 44px;
   padding: 0 var(--s2);
-  border: 0;
-  border-right: 1px solid var(--line);
-  background: transparent;
+  border: 1px solid var(--line);
+  background: linear-gradient(to bottom, #1a1d24, #111318);
   color: var(--muted);
   font: inherit;
   font-size: 0.875rem;
@@ -209,18 +211,30 @@ kbd {
   cursor: pointer;
 }
 
-.modes button:last-child {
-  border-right: 0;
-}
-
-.modes button kbd {
-  border-color: currentColor;
-  color: inherit;
+/* Indicator light: off is a dim ring, on is lit in the accent. */
+.modes button::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: #000;
 }
 
 .modes button[aria-pressed='true'] {
+  background: linear-gradient(to bottom, #0d0f14, #16181e);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.modes button[aria-pressed='true']::before {
   background: var(--accent);
-  color: var(--accent-ink);
+  border-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.modes button kbd {
+  color: inherit;
 }
 
 .deck {
@@ -281,11 +295,12 @@ kbd {
   color: var(--muted);
 }
 
-.hud-values span {
+.hud-values > span {
   display: block;
+  line-height: 1.5;
 }
 
-.hud-values span:first-child {
+.hud-values > span:first-child {
   color: var(--text);
 }
 
@@ -559,11 +574,15 @@ kbd {
   text-transform: uppercase;
 }
 
-/* ------------------------------------------------------------ Shelf */
+/* ------------------------------------------------------------ Record shelf */
 
 .shelf {
   grid-area: shelf;
   min-width: 0;
+}
+
+.shelf-list h2 {
+  margin-bottom: 4px;
 }
 
 .tracks ul {
@@ -575,21 +594,105 @@ kbd {
   list-style: none;
 }
 
-.tracks button {
+.record {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: var(--s2);
   width: 100%;
-  min-block-size: 56px;
-  padding: var(--s1) var(--s2);
-  border: 1px solid var(--line);
-  background: var(--panel);
+  min-block-size: 96px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
   color: var(--text);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
-.tracks button[aria-current='true'] {
+.sleeve-area {
+  position: relative;
+  width: 88px;
+  height: 88px;
+}
+
+.sleeve {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  /* Translucent, so the record shows faintly through its sleeve. */
+  background: linear-gradient(135deg, rgba(30, 33, 41, 0.72), rgba(13, 15, 20, 0.62) 70%);
+  border: 1px solid var(--hairline);
+}
+
+.record[aria-current='true'] .sleeve {
   border-color: var(--accent);
-  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.disc {
+  position: absolute;
+  inset: 4px;
+  z-index: 1;
+  display: block;
+}
+
+.disc-spin,
+.disc-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.disc-number {
+  font: 700 9px var(--font-mono);
+  fill: #06070a;
+}
+
+/* Tonearm: pivots at its top; the head is in the accent colour. */
+.stylus {
+  position: absolute;
+  left: 150px;
+  top: -6px;
+  z-index: 3;
+  width: 3px;
+  height: 3px;
+  transform-origin: 0 0;
+}
+
+.stylus::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 52px;
+  background: linear-gradient(to bottom, #b9bec8 0 82%, var(--accent) 82%);
+  transform-origin: top;
+  transform: rotate(32deg);
+}
+
+.record-text {
+  display: grid;
+}
+
+.record-number {
+  font-size: 0.875rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+.record-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.record[aria-current='true'] .record-number {
+  color: var(--accent);
+}
+
+.record[aria-current='true'] .record-title {
+  font-style: italic;
 }
 
 /* ------------------------------------------------------------ Lower panels */
@@ -809,6 +912,103 @@ footer {
   cursor: pointer;
 }
 
+/* ------------------------------------------------------------ Rolling digits */
+
+.roll {
+  display: inline-block;
+  white-space: pre;
+  line-height: 1;
+}
+
+/* Every character sits in a 1em box so digits and separators line up. */
+.roll > span {
+  display: inline-block;
+  height: 1em;
+  line-height: 1;
+  vertical-align: top;
+}
+
+.roll-digit {
+  overflow: hidden;
+}
+
+.roll-col {
+  display: flex;
+  flex-direction: column;
+  transition: transform 280ms ease-out;
+}
+
+.roll-col span {
+  height: 1em;
+  line-height: 1;
+}
+
+/* ------------------------------------------------------------ Intro */
+
+.intro {
+  --r: 0px;
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+
+/* While the drone plays, the page shows through a growing circle. */
+.intro.playing {
+  background: transparent;
+}
+
+.intro.playing::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #000;
+  -webkit-mask: radial-gradient(circle var(--r) at 50% 45%, transparent 98%, #000 100%);
+  mask: radial-gradient(circle var(--r) at 50% 45%, transparent 98%, #000 100%);
+}
+
+.intro-inner {
+  position: relative;
+  text-align: center;
+  padding: var(--s4);
+}
+
+.intro-title {
+  margin: 0 0 var(--s2);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(3rem, 6vw, 6rem);
+  font-weight: 400;
+}
+
+.intro-lede {
+  color: var(--muted);
+}
+
+.intro-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--s2);
+  margin-top: var(--s3);
+}
+
+.intro-buttons .secondary {
+  margin: 0;
+  min-block-size: 48px;
+}
+
+.intro-caption {
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roll-col {
+    transition: none;
+  }
+}
+
 /* ------------------------------------------------------------ Utilities */
 
 .visually-hidden {
@@ -890,8 +1090,9 @@ footer {
     flex-wrap: wrap;
   }
 
-  .tracks button {
+  .record {
     width: auto;
+    padding-right: var(--s3);
   }
 }
 

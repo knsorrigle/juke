@@ -1,3 +1,4 @@
+import { animate, useReducedMotion } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { JukeboxPlayer } from '../player.ts'
 import { useJukebox } from '../store.ts'
@@ -10,9 +11,10 @@ import { Graticule } from './Graticule.tsx'
 import { Halo } from './halo/Halo.tsx'
 import { Captions, ExploreLayer } from './Explore.tsx'
 import { HudBottom, HudTop, ModeSwitch } from './Hud.tsx'
+import { Intro } from './Intro.tsx'
 import { Readout } from './Readout.tsx'
 import { RippleCanvas } from './RippleCanvas.tsx'
-import { TrackList } from './TrackList.tsx'
+import { Shelf } from './shelf/Shelf.tsx'
 import { Transport } from './Transport.tsx'
 import { useAccent } from './useAccent.ts'
 import { useKeyboard } from './useKeyboard.ts'
@@ -68,6 +70,28 @@ export default function App() {
 
   useKeyboard(player)
   useAccent()
+
+  // Track switch: fade the new video in once its first frame is ready (instant with reduced motion).
+  const reduced = useReducedMotion()
+  const firstTrack = useRef(true)
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    if (firstTrack.current) {
+      firstTrack.current = false
+      return
+    }
+    // Reduced motion: an instant swap, so nothing to fade.
+    if (reduced) return
+    video.style.opacity = '0'
+    const show = () => void animate(video, { opacity: [0, 1] }, { duration: 0.6, ease: 'easeOut' })
+    video.addEventListener('loadeddata', show, { once: true })
+    const fallback = window.setTimeout(show, 1500)
+    return () => {
+      video.removeEventListener('loadeddata', show)
+      window.clearTimeout(fallback)
+    }
+  }, [trackId, reduced])
 
   const choose = (next: Track) => {
     const video = videoRef.current
@@ -133,8 +157,7 @@ export default function App() {
         </main>
 
         <aside className="shelf" aria-label="Record shelf">
-          <h3>Records</h3>
-          <TrackList tracks={tracks} onChoose={choose} />
+          <Shelf tracks={tracks} onChoose={choose} engine={player.engine} />
         </aside>
 
         <div className="lower">
@@ -195,6 +218,7 @@ export default function App() {
         </div>
       </div>
 
+      <Intro engine={player.engine} />
       <Announcer />
     </>
   )

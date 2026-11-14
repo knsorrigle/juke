@@ -1,3 +1,4 @@
+import { MotionConfig } from 'motion/react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@fontsource/instrument-serif/400.css'
@@ -13,6 +14,9 @@ applyHighContrast(initialHighContrast())
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    {/* Every motion animation follows the system's reduced-motion setting. */}
+    <MotionConfig reducedMotion="user">
+      <App />
+    </MotionConfig>
   </StrictMode>,
 )
