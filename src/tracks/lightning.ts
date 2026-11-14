@@ -1,3 +1,4 @@
+import { FULL_GLOBE } from '../mapping/geo.ts'
 import { createLightningRuleset } from '../mapping/lightning.ts'
 import { createRunner } from '../mapping/runner.ts'
 import { mediaUrl } from './mediaUrl.ts'
@@ -11,6 +12,7 @@ import type { Track } from './types.ts'
 export const lightning: Track = {
   id: 'lightning',
   title: 'Lightning seen from the International Space Station',
+  shortTitle: 'Lightning',
   videoSrc: mediaUrl('lightning-flat.mp4'),
   credit: "NASA's Scientific Visualization Studio",
   sourceUrl: 'https://svs.gsfc.nasa.gov/5011/',
@@ -22,11 +24,11 @@ export const lightning: Track = {
   geographic: { x: true, y: true, lon: [-180, 180], lat: [90, -90] },
   masks: [],
   legend: [
-    'Each soft mallet note is a cluster of new lightning. A steady pulse plays up to four notes at a time, for the biggest clusters since the last pulse.',
+    'Each soft mallet note is a cluster of new lightning. A steady pulse plays up to three notes at a time, for the biggest clusters since the last pulse.',
     'Left and right: where the lightning is, west to east. The Americas are on your left, Africa in the middle, Asia and Australia on your right.',
     'Pitch: how far north. High notes are northern storms, low notes are southern storms.',
     'Loudness of a note: the size of that cluster.',
-    'The low hum and rumble underneath: how much lightning there is everywhere. It swells in busy seasons and thins out in quiet ones.',
+    'The hum and rumble underneath: how much lightning there is everywhere. They swell and brighten in busy seasons and thin out in quiet ones.',
     'A very faint hum means the track is playing but there is little lightning, as in the first ten seconds.',
   ],
   timeLabels: {
@@ -35,6 +37,5 @@ export const lightning: Track = {
     // NASA's file gives 2003 for the lines after December 2022. See credits.json.
     yearCorrections: [{ from: 2003, to: 2023 }],
   },
-  createRunner: () =>
-    createRunner(createLightningRuleset({ lonLeft: -180, lonRight: 180, latTop: 90, latBottom: -90 })),
+  createRunner: () => createRunner(createLightningRuleset(FULL_GLOBE)),
 }

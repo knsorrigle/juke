@@ -10,13 +10,14 @@ import {
 } from './geo.ts'
 import {
   LIGHTNING_DEFAULTS,
+  LIGHTNING_KNOBS,
   clusterVelocity,
   createLightningRuleset,
   createLightningState,
   padTarget,
   stepLightning,
 } from './lightning.ts'
-import { MINOR_PENTATONIC, midiToFrequency, quantizeToScale, scaleNotes } from './scales.ts'
+import { MINOR_PENTATONIC, midiToFrequency, quantizeToScale, scaleNotes, scaleStep } from './scales.ts'
 
 const W = 160
 const H = 80
@@ -39,6 +40,8 @@ function features(risingPixels: RisingPixel[] = []): FrameFeatures {
     centroid: null,
     signalMean: 0,
     risingPixels,
+    classes: {},
+    grid: null,
   }
 }
 
@@ -78,6 +81,12 @@ describe('scales', () => {
     expect(quantizeToScale(-3, notes)).toBe(45)
     expect(quantizeToScale(7, notes)).toBe(81)
     expect(quantizeToScale(Number.NaN, notes)).toBe(45)
+  })
+
+  it('steps around a register without leaving the scale', () => {
+    expect(scaleStep(0, notes, 2)).toBe(50)
+    expect(scaleStep(0, notes, -3)).toBe(45)
+    expect(scaleStep(1, notes, 3)).toBe(81)
   })
 
   it('converts MIDI to frequency', () => {
@@ -170,7 +179,7 @@ describe('Lightning rules', () => {
       const r = stepLightning(features(blob(10, 10, 3)), t, state, LIGHTNING_DEFAULTS, FULL_GLOBE)
       expect(r.output.notes).toEqual([])
       expect(r.output.tick).toBeNull()
-      expect(r.output.pad).toBeNull()
+      expect(r.output.voices).toBeNull()
       state = r.state
     }
     expect(state.pending).toHaveLength(12)
@@ -218,7 +227,7 @@ describe('Lightning rules', () => {
     const { output } = playTick(pixels)
     expect(output.tick?.clusterCount).toBe(6)
     expect(output.tick?.flashCount).toBe(25)
-    expect(output.notes).toHaveLength(4)
+    expect(output.notes).toHaveLength(3)
     const velocities = output.notes.map((n) => n.velocity)
     expect(velocities).toEqual([...velocities].sort((a, b) => b - a))
     // Notes are strummed a few milliseconds apart, in that order.
@@ -230,7 +239,7 @@ describe('Lightning rules', () => {
     const [west, east] = [...output.notes].sort((a, b) => a.pan - b.pan)
     expect(west.pan).toBeLessThan(-0.6)
     expect(east.pan).toBeGreaterThan(0.6)
-    for (const n of output.notes) expect(Math.abs(n.pan)).toBeLessThanOrEqual(0.9)
+    for (const n of output.notes) expect(Math.abs(n.pan)).toBeLessThanOrEqual(1)
   })
 
   it('maps latitude to pitch with north high, always on the pentatonic scale', () => {
@@ -261,8 +270,8 @@ describe('Lightning rules', () => {
   it('raises the pad with the flash count even when notes are capped', () => {
     const quiet = playTick(blob(10, 10, 2))
     const busy = playTick(Array.from({ length: 8 }, (_, i) => blob(5, 5 + i * 8, 10)).flat())
-    expect(busy.output.notes).toHaveLength(4)
-    expect(busy.output.pad!.level).toBeGreaterThan(quiet.output.pad!.level)
+    expect(busy.output.notes).toHaveLength(3)
+    expect(busy.output.voices!.hum.level).toBeGreaterThan(quiet.output.voices!.hum.level)
     expect(padTarget(LIGHTNING_DEFAULTS.flashCountFull, LIGHTNING_DEFAULTS)).toBe(1)
     expect(padTarget(0, LIGHTNING_DEFAULTS)).toBe(0)
     expect(padTarget(100000, LIGHTNING_DEFAULTS)).toBe(1)
@@ -275,7 +284,7 @@ describe('Lightning rules', () => {
       const r = stepLightning(features(pixels), time, state, LIGHTNING_DEFAULTS, FULL_GLOBE)
       state = r.state
       time += TICK
-      return r.output.pad?.level
+      return r.output.voices?.hum.level
     }
     const busy = () => blob(0, 0, 100)
     step(busy())
@@ -303,7 +312,7 @@ describe('Lightning rules', () => {
   it('exposes yellow-plus-brightening detection through the ruleset', () => {
     const ruleset = createLightningRuleset(FULL_GLOBE)
     expect(ruleset.analysis.signal).toBe('yellow')
-    const first = ruleset.step(features(blob(1, 1, 1)), 0, ruleset.createState())
+    const first = ruleset.step(features(blob(1, 1, 1)), 0, ruleset.createState(), LIGHTNING_KNOBS)
     expect(first.output.notes).toEqual([])
   })
 })

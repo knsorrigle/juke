@@ -9,7 +9,7 @@ import {
   yToLatitude,
 } from './geo.ts'
 import { MINOR_PENTATONIC, clamp, quantizeToScale, scaleNotes } from './scales.ts'
-import type { MappingOutput, NoteEvent, Ruleset } from './types.ts'
+import type { Knobs, MappingOutput, NoteEvent, Ruleset } from './types.ts'
 
 export interface LightningConfig {
   clock: Clock
@@ -49,13 +49,13 @@ export interface LightningConfig {
  */
 export const LIGHTNING_DEFAULTS: LightningConfig = {
   clock: { bpm: 110, division: 4 },
-  maxNotesPerTick: 4,
+  maxNotesPerTick: 3,
   minClusterSize: 1,
   rootMidi: 45, // A2
   octaves: 3,
   latSouth: -50,
   latNorth: 55,
-  panWidth: 0.9,
+  panWidth: 1,
   velocityMin: 0.25,
   clusterSizeFull: 14,
   flashCountFull: 110,
@@ -114,7 +114,7 @@ export function stepLightning(
   if (state.tick === null || tick === state.tick) {
     return {
       state: { tick, pending: state.pending.concat(fresh), padLevel: state.padLevel },
-      output: { notes: [], pad: null, tick: null },
+      output: { notes: [], voices: null, tick: null },
     }
   }
 
@@ -129,6 +129,7 @@ export function stepLightning(
     .filter((c) => c.size >= config.minClusterSize)
     .slice(0, config.maxNotesPerTick)
     .map((c, i) => ({
+      voice: 'mallet',
       time: at + i * config.strum,
       midi: quantizeToScale(
         latitudeToPosition(yToLatitude(c.y, geo), config.latSouth, config.latNorth),
@@ -142,11 +143,20 @@ export function stepLightning(
   const rate = target > state.padLevel ? config.padAttack : config.padRelease
   const padLevel = clamp(state.padLevel + (target - state.padLevel) * rate, 0, 1)
 
+  const hum = Math.max(config.padFloor, padLevel)
+
   return {
     state: { tick, pending: fresh, padLevel },
     output: {
       notes,
-      pad: { level: Math.max(config.padFloor, padLevel) },
+      voices: {
+        hum: { level: hum, brightness: hum },
+        rumble: { level: hum ** 1.5 },
+      },
+      info: {
+        'New lightning this pulse': `${flashCount} pixels in ${clusters.length} clusters, ${notes.length} notes`,
+        'Hum level': `${Math.round(hum * 100)}%`,
+      },
       tick: {
         index: tick,
         time: at,
@@ -158,16 +168,36 @@ export function stepLightning(
   }
 }
 
+export const LIGHTNING_KNOBS: Knobs = { maxNotes: 3, humDb: 0, panWidth: 1, tempo: 110, reverb: 0.3 }
+
 /** The Lightning ruleset for a flat map with the given edges. */
 export function createLightningRuleset(
   geo: GeoFrame,
   overrides: Partial<LightningConfig> = {},
 ): Ruleset<LightningState> {
-  const config = { ...LIGHTNING_DEFAULTS, ...overrides }
+  const base = { ...LIGHTNING_DEFAULTS, ...overrides }
   return {
     // Lightning is drawn in yellow: detect it by colour plus brightening.
     analysis: { signal: 'yellow', riseThreshold: 0.04, signalFloor: 0.05, spotThreshold: 0.15 },
+    instruments: [
+      { id: 'mallet', label: 'Lightning notes', kind: 'mallet', gain: 0.55 },
+      { id: 'hum', label: 'Hum', kind: 'pad', gain: 0.32, midi: [45, 52, 57] },
+      { id: 'rumble', label: 'Rumble', kind: 'rumble', gain: 0.8 },
+    ],
+    knobs: LIGHTNING_KNOBS,
     createState: createLightningState,
-    step: (features, time, state) => stepLightning(features, time, state, config, geo),
+    step: (features, time, state, knobs) =>
+      stepLightning(
+        features,
+        time,
+        state,
+        {
+          ...base,
+          maxNotesPerTick: Math.round(knobs.maxNotes),
+          panWidth: knobs.panWidth,
+          clock: { ...base.clock, bpm: knobs.tempo },
+        },
+        geo,
+      ),
   }
 }

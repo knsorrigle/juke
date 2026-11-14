@@ -24,3 +24,25 @@ export function quantizeToScale(position: number, notes: number[]): number {
 export function midiToFrequency(midi: number): number {
   return 440 * 2 ** ((midi - 69) / 12)
 }
+
+/** Semitone steps of the major pentatonic scale. */
+export const MAJOR_PENTATONIC = [0, 2, 4, 7, 9]
+
+/**
+ * Move `previous` towards `target` with a time constant of `tau` seconds,
+ * given that `dt` seconds have passed. Frame-rate independent smoothing.
+ */
+export function smooth(previous: number, target: number, dt: number, tau: number): number {
+  if (!(dt > 0) || tau <= 0) return target
+  return previous + (target - previous) * (1 - Math.exp(-dt / tau))
+}
+
+/**
+ * Like quantizeToScale, then moved `steps` scale degrees up or down, staying
+ * inside the scale. Used to add a little melodic movement around a register.
+ */
+export function scaleStep(position: number, notes: number[], steps: number): number {
+  const p = clamp(Number.isFinite(position) ? position : 0, 0, 1)
+  const base = Math.min(notes.length - 1, Math.floor(p * notes.length))
+  return notes[clamp(base + steps, 0, notes.length - 1)]
+}
