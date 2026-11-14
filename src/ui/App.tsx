@@ -113,7 +113,7 @@ export default function App() {
             {loading ? 'Loading video. ' : ''}
             Keyboard: <kbd>Space</kbd> plays and pauses. <kbd>Left</kbd> and <kbd>Right</kbd> skip 5
             seconds. <kbd>L</kbd> explains the sounds. <kbd>F</kbd> describes the frame,{' '}
-            <kbd>G</kbd> in more detail, <kbd>H</kbd> reads the corner readouts. <kbd>2</kbd> explores the paused picture with a cursor:
+            <kbd>G</kbd> in more detail, <kbd>H</kbd> reads the corner readouts, <kbd>C</kbd> switches high contrast. <kbd>2</kbd> explores the paused picture with a cursor:
             arrows move it (with <kbd>Shift</kbd>, 10 at a time), <kbd>I</kbd> says what is under it,{' '}
             <kbd>1</kbd> or <kbd>Esc</kbd> goes back. <kbd>4</kbd> starts the Ear Test. Sound starts
             when you press play.

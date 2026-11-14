@@ -57,6 +57,8 @@ export interface JukeboxState {
   /** What the Explore cursor is over, in words. */
   probeText: string
   earTest: EarTestView
+  /** High contrast theme on (C key). */
+  highContrast: boolean
   /** What is sounding right now, for the visible caption bar. */
   sounding: string
   /** Instrument heard alone, or null for all. */
@@ -85,6 +87,7 @@ export const useJukebox = create<JukeboxState>((set) => ({
   mode: 'play',
   cursor: { col: 32, row: 16, cols: 64, rows: 32 },
   probeText: '',
+  highContrast: false,
   earTest: { phase: 'setup', difficulty: 'easy', index: 0, total: 0, score: 0, prompt: '', reveal: '', best: {} },
   sounding: '',
   knobs: {},

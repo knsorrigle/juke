@@ -2,12 +2,13 @@
   color-scheme: dark;
   --bg: #0a0d13;
   --panel: #131824;
-  --line: #2a3142;
+  --line: #68728a;
   --text: #eef1f6;
   --muted: #a9b2c3;
   --accent: #ffd43b;
   --accent-ink: #1a1400;
   --focus: #7cc4ff;
+  --error: #ffb4a8;
   font-family:
     system-ui,
     -apple-system,
@@ -16,6 +17,45 @@
     sans-serif;
   font-size: 112.5%;
   line-height: 1.55;
+}
+
+:root.hc {
+  --bg: #000000;
+  --panel: #000000;
+  --line: #ffffff;
+  --text: #ffffff;
+  --muted: #f2f2f2;
+  --accent: #ffe600;
+  --accent-ink: #000000;
+  --focus: #00e5ff;
+  --error: #ff9e94;
+}
+
+/* High contrast: solid backgrounds and visible edges everywhere. */
+.hc .hud p,
+.hc .date {
+  background: #000;
+  border: 1px solid #fff;
+}
+
+.hc .captions,
+.hc .readout,
+.hc .ear-test,
+.hc .stage {
+  border-width: 2px;
+}
+
+.hc .groove rect {
+  fill: #9a9a9a;
+}
+
+.hc .groove rect.played {
+  fill: var(--accent);
+  opacity: 1;
+}
+
+.hc :where(a, button, input, summary):focus-visible {
+  outline-width: 4px;
 }
 
 * {
@@ -180,7 +220,7 @@ kbd {
 }
 
 .error {
-  color: #ffb4a8;
+  color: var(--error);
   font-weight: 600;
 }
 
