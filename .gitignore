@@ -29,3 +29,6 @@ dist-ssr
 # Vercel CLI link
 .vercel
 .env*
+
+# Playwright MCP scratch output
+.playwright-mcp/
