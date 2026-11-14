@@ -130,6 +130,8 @@ export function stepLightning(
     .slice(0, config.maxNotesPerTick)
     .map((c, i) => ({
       voice: 'mallet',
+      x: c.x,
+      y: c.y,
       time: at + i * config.strum,
       midi: quantizeToScale(
         latitudeToPosition(yToLatitude(c.y, geo), config.latSouth, config.latNorth),
@@ -180,7 +182,7 @@ export function createLightningRuleset(
     // Lightning is drawn in yellow: detect it by colour plus brightening.
     analysis: { signal: 'yellow', riseThreshold: 0.04, signalFloor: 0.05, spotThreshold: 0.15 },
     instruments: [
-      { id: 'mallet', label: 'Lightning notes', kind: 'mallet', gain: 0.55 },
+      { id: 'mallet', label: 'Lightning notes', kind: 'mallet', gain: 0.55, color: '#ffd43b' },
       { id: 'hum', label: 'Hum', kind: 'pad', gain: 0.32, midi: [45, 52, 57] },
       { id: 'rumble', label: 'Rumble', kind: 'rumble', gain: 0.8 },
     ],

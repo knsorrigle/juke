@@ -92,6 +92,8 @@ export function stepNightLights(
       for (let i = 0; i < count; i++) {
         notes.push({
           voice: 'sparkle',
+          x: scanX,
+          y: lights.y,
           time: at + i * 0.03,
           midi: quantizeToScale((i + (tick % 3)) / (max + 2), SPARKLE_SCALE),
           pan,
@@ -106,6 +108,8 @@ export function stepNightLights(
       if (grew > 0.08 && max > 0) {
         notes.push({
           voice: 'rise',
+          x: scanX,
+          y: purple.y,
           time: at,
           midi: quantizeToScale(grew, RISE_SCALE),
           pan,
@@ -117,6 +121,8 @@ export function stepNightLights(
       if (faded > 0.08 && max > 1) {
         notes.push({
           voice: 'fall',
+          x: scanX,
+          y: orange.y,
           time: at + 0.04,
           midi: quantizeToScale(1 - faded, FALL_SCALE),
           pan,
@@ -158,9 +164,9 @@ export function createNightLightsRuleset(): Ruleset<NightState> {
     analysis: { classes: NIGHT_CLASSES },
     instruments: [
       { id: 'chord', label: 'Lights chord', kind: 'pad', gain: 0.3, midi: [48, 55, 60, 64] },
-      { id: 'sparkle', label: 'City sparkle', kind: 'bell', gain: 0.4 },
-      { id: 'rise', label: 'New lights', kind: 'bell', gain: 0.6 },
-      { id: 'fall', label: 'Lights out', kind: 'low', gain: 0.7 },
+      { id: 'sparkle', label: 'City sparkle', kind: 'bell', gain: 0.4, color: '#fff2b0' },
+      { id: 'rise', label: 'New lights', kind: 'bell', gain: 0.6, color: '#a070e0' },
+      { id: 'fall', label: 'Lights out', kind: 'low', gain: 0.7, color: '#e09040' },
     ],
     knobs: NIGHT_KNOBS,
     createState: () => ({ time: null, tick: null, fullness: 0 }),

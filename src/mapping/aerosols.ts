@@ -103,6 +103,8 @@ export function stepAerosols(
       energy[id] -= 1
       notes.push({
         voice,
+        x: types[id].x,
+        y: types[id].y,
         time: at + notes.length * 0.03,
         midi: scaleStep(north(types[id].y), scale, FIGURE[(tick + (id === 'salt' ? 3 : 0)) % FIGURE.length]),
         pan: pan(types[id].x),
@@ -147,10 +149,10 @@ export function createAerosolRuleset(): Ruleset<AerosolState> {
   return {
     analysis: { classes: AEROSOL_CLASSES },
     instruments: [
-      { id: 'carbon', label: 'Black carbon', kind: 'brass', gain: 0.5, midi: [36, 43] },
-      { id: 'dust', label: 'Dust', kind: 'breath', gain: 0.9, midi: [72] },
-      { id: 'salt', label: 'Sea salt', kind: 'bell', gain: 0.5 },
-      { id: 'sulfate', label: 'Sulfate', kind: 'pluck', gain: 0.6 },
+      { id: 'carbon', label: 'Black carbon', kind: 'brass', gain: 0.5, midi: [36, 43], color: '#d4624a' },
+      { id: 'dust', label: 'Dust', kind: 'breath', gain: 0.9, midi: [72], color: '#c49be0' },
+      { id: 'salt', label: 'Sea salt', kind: 'bell', gain: 0.5, color: '#8aaeaa' },
+      { id: 'sulfate', label: 'Sulfate', kind: 'pluck', gain: 0.6, color: '#55e03b' },
     ],
     knobs: AEROSOL_KNOBS,
     soloable: ['carbon', 'dust', 'salt', 'sulfate'],

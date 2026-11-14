@@ -106,6 +106,8 @@ export function stepOcean(
       if (value === null || grid.coverage[row * grid.cols + col] < 0.05) continue // land
       notes.push({
         voice: 'arp',
+        x: scanX,
+        y: (row + 0.5) / OCEAN_ROWS,
         time: tickTime(tick, clock) + i * 0.04,
         midi: quantizeToScale(value / SST_MAX, ARP_SCALE),
         pan: clamp((scanX - 0.5) * 2 * knobs.panWidth, -1, 1),
@@ -144,7 +146,7 @@ export function createOceanRuleset(): Ruleset<OceanState> {
       regionCols: OCEAN_COLS,
       regionRows: OCEAN_ROWS,
     },
-    instruments: [...bands, { id: 'arp', label: 'Scanner', kind: 'mallet', gain: 0.5 }],
+    instruments: [...bands, { id: 'arp', label: 'Scanner', kind: 'mallet', gain: 0.5, color: '#ffffff' }],
     knobs: OCEAN_KNOBS,
     createState: () => ({ time: null, tick: null, temps: [], motion: [] }),
     step: stepOcean,

@@ -16,6 +16,9 @@ export interface NoteEvent {
   duration?: number
   /** Semitones the pitch slides over the note (positive rises, negative falls). */
   glide?: number
+  /** Where on the frame the note comes from (0..1 from the top-left), for a ripple. */
+  x?: number
+  y?: number
 }
 
 /** Target for a sustained instrument. Omitted fields stay where they are. */
@@ -75,6 +78,8 @@ export interface InstrumentSpec {
   kind: NoteKind | SustainKind
   /** Base gain, 0..1. */
   gain: number
+  /** CSS colour for this instrument's ripples, from the track's legend. */
+  color?: string
   /** Starting pitches (MIDI) for sustained instruments. */
   midi?: number[]
 }
