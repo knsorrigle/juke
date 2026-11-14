@@ -1,7 +1,7 @@
 {
   "source": "NASA Scientific Visualization Studio (SVS), https://svs.gsfc.nasa.gov",
   "retrieved": "2026-11-14",
-  "processing": "Videos re-encoded with ffmpeg to H.264 (yuv420p, 30 fps, 1-second keyframes), 720 px high, audio removed. Content is otherwise unmodified.",
+  "processing": "Videos re-encoded with ffmpeg to H.264 (yuv420p, 30 fps, 1-second keyframes), 720 px high, audio removed. Crops and trims are listed per item; content is otherwise unmodified.",
   "items": [
     {
       "id": "night-lights",
@@ -13,11 +13,11 @@
       "dataCredit": "Black Marble (Suomi NPP VIIRS). NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA GSFC.",
       "sourceFile": "https://svs.gsfc.nasa.gov/vis/a000000/a005300/a005313/nightlights_flat_series_and_change_wZooms_13_EIC_2160p30_h265.mp4",
       "sourceResolution": "7680x2160",
-      "encoded": { "width": 2560, "height": 720, "fps": 30, "durationSeconds": 43.33 },
-      "notes": "The only video on the page is 7680x2160 (32:9); no 1080p version is offered."
+      "encoded": { "width": 1280, "height": 720, "fps": 30, "durationSeconds": 21.8 },
+      "notes": "The only video on the page is 7680x2160 (32:9) and shows the world map about twice across its width. Cropped to one copy of the world (source columns 3719 to 7561, 3842 px = 360 degrees), so the left edge is 180 degrees longitude; the offset was measured by matching the land outline against the lightning map and is accurate to about a quarter of a degree. Trimmed to the first 21.8 s: the year series and the change map, ending before the zoomed insets."
     },
     {
-      "id": "lightning-flat",
+      "id": "lightning",
       "file": "lightning-flat.mp4",
       "title": "Lightning Events Detected from the International Space Station (ISS) 2017-2023",
       "svsId": 5011,
@@ -28,33 +28,24 @@
       "encoded": { "width": 1440, "height": 720, "fps": 30, "durationSeconds": 100.1 },
       "labelsFile": "lightning-flat.labels.txt",
       "labelsSource": "https://svs.gsfc.nasa.gov/vis/a000000/a005000/a005011/labels.txt",
-      "notes": "Science On a Sphere (flat equirectangular) version. Source is larger than 1080p; frame rate halved from 60 to 30 fps. labels.txt is NASA's per-frame date list for the 60 fps source, copied unmodified."
-    },
-    {
-      "id": "lightning-globe",
-      "file": "lightning-globe.mp4",
-      "title": "Lightning Events Detected from the International Space Station (ISS) 2017-2023",
-      "svsId": 5011,
-      "url": "https://svs.gsfc.nasa.gov/5011/",
-      "credit": "NASA's Scientific Visualization Studio",
-      "sourceFile": "https://svs.gsfc.nasa.gov/vis/a000000/a005000/a005011/iss_lightning_sphere_07312023.mp4",
-      "sourceResolution": "1920x1080",
-      "encoded": { "width": 1280, "height": 720, "fps": 30, "durationSeconds": 216.7 },
-      "notes": "Rendered rotating-globe version (the page's 1080p download). Alternative to lightning-flat; keep only one."
+      "notes": "Science On a Sphere (flat equirectangular) version. Source is larger than 1080p; frame rate halved from 60 to 30 fps. labels.txt is NASA's date for each frame of the 60 fps source, stored here unmodified.",
+      "corrections": [
+        "NASA's labels.txt gives the year as 2003 on its last 1,074 lines (after December 2022). The app displays these as 2023, because the dates are otherwise in order and the page describes data through 2023. The stored file is not edited."
+      ]
     },
     {
       "id": "aerosols",
-      "file": "aerosols-still.png",
-      "title": "GEOS Aerosols (2025)",
-      "svsId": 5669,
-      "url": "https://svs.gsfc.nasa.gov/5669/",
+      "file": "aerosols.mp4",
+      "title": "GEOS Aerosols",
+      "svsId": 5572,
+      "url": "https://svs.gsfc.nasa.gov/5572/",
       "credit": "NASA's Global Modeling Assimilation Office (GMAO) and NASA's Scientific Visualization Studio (SVS)",
-      "sourceFile": "https://svs.gsfc.nasa.gov/vis/a000000/a005600/a005669/Aerosols_2025-08-19T20_00_00_1920x1080.png",
+      "sourceFile": "https://svs.gsfc.nasa.gov/vis/a000000/a005500/a005572/Aerosols_AnnotationsLabel_1920x1080_30p.mp4",
       "sourceResolution": "1920x1080",
-      "encoded": { "width": 1280, "height": 720, "still": true },
+      "encoded": { "width": 1440, "height": 720, "fps": 30, "durationSeconds": 73.6 },
       "legendFile": "legends/aerosols-colorbar.png",
-      "legendSource": "https://svs.gsfc.nasa.gov/vis/a000000/a005600/a005669/Aerosols_cbar.png",
-      "notes": "This page offers still images only: no video and no frame set."
+      "legendSource": "https://svs.gsfc.nasa.gov/vis/a000000/a005500/a005572/Aerosols_cbar.png",
+      "notes": "Replaces the still from https://svs.gsfc.nasa.gov/5669/, which has no video. The 2:1 map is letterboxed inside the 16:9 source; the 60 px black bars at top and bottom were cropped off."
     },
     {
       "id": "sea-surface-currents",
@@ -68,7 +59,7 @@
       "encoded": { "width": 1440, "height": 720, "fps": 30, "durationSeconds": 66.7 },
       "legendFile": "legends/sea-surface-temp-colorbar.png",
       "legendSource": "https://svs.gsfc.nasa.gov/vis/a000000/a003900/a003912/sst_ecco2_cbar.png",
-      "notes": "Fine flow lines are visibly softened by the 15 MB size cap."
+      "notes": "Encoded at about 34 MB to keep the fine flow lines sharp."
     },
     {
       "id": "co2",
