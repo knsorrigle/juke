@@ -110,6 +110,12 @@ export class AudioEngine {
   private soloId: string | null = null
   private peak = -Infinity
   private noteCount = 0
+  private explore: {
+    tone: Tone.Oscillator
+    toneGain: Tone.Gain
+    noiseGain: Tone.Gain
+    panner: Tone.Panner
+  } | null = null
 
   get isStarted(): boolean {
     return this.started
@@ -138,6 +144,32 @@ export class AudioEngine {
     await this.reverb.ready
     this.started = true
     if (this.pending) this.loadTrack(this.pending.instruments, this.pending.knobs)
+  }
+
+  /**
+   * The Explore voice: a gliding tone for a data value, soft pink noise for
+   * places with no data (land, legends, date stamps), or silence. Pass null to
+   * fade it out.
+   */
+  setExplore(target: { midi: number; pan: number; sound: 'tone' | 'noise' | 'silence' } | null): void {
+    if (!this.started || !this.master) return
+    if (!this.explore) {
+      const panner = new Tone.Panner(0).connect(this.master)
+      const toneGain = new Tone.Gain(0).connect(panner)
+      const noiseGain = new Tone.Gain(0).connect(panner)
+      const tone = new Tone.Oscillator({ type: 'triangle', frequency: 220, volume: -6 }).connect(toneGain).start()
+      const noiseFilter = new Tone.Filter(900, 'lowpass').connect(noiseGain)
+      new Tone.Noise('pink').connect(noiseFilter).start()
+      this.explore = { tone, toneGain, noiseGain, panner }
+    }
+    const e = this.explore
+    const sound = target?.sound ?? 'silence'
+    e.toneGain.gain.rampTo(sound === 'tone' ? 0.32 : 0, 0.08)
+    e.noiseGain.gain.rampTo(sound === 'noise' ? 0.1 : 0, 0.08)
+    if (target) {
+      e.tone.frequency.rampTo(midiToFrequency(target.midi), 0.08)
+      e.panner.pan.rampTo(clamp(target.pan, -1, 1), 0.08)
+    }
   }
 
   /** Swap to a track's instruments, crossfading from whatever was playing. */
