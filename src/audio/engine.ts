@@ -79,6 +79,11 @@ function makeSynth(kind: NoteKind): NoteSynth {
   }
 }
 
+/** True on phones and tablets, where audio buffers need to be larger. */
+export function isTouchDevice(): boolean {
+  return typeof window !== 'undefined' && (window.matchMedia?.('(pointer: coarse)').matches ?? false)
+}
+
 /** Lowest and highest filter cutoff (Hz) per sustained instrument kind. */
 const FILTER_RANGE: Record<string, [number, number]> = {
   pad: [180, 2600],
@@ -128,6 +133,9 @@ export class AudioEngine {
   }
 
   private async build(): Promise<void> {
+    // Phones crackle with the small default buffer. On touch devices, ask for a
+    // playback-sized buffer: smoother sound for a little more latency.
+    if (isTouchDevice()) Tone.setContext(new Tone.Context({ latencyHint: 'playback' }))
     await Tone.start()
     // Master chain: gentle compression, then a limiter so the output never clips.
     const limiter = new Tone.Limiter(-1).toDestination()
