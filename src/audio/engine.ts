@@ -379,6 +379,71 @@ export class AudioEngine {
     this.rig?.hum.gain.rampTo(active ? 1 : 0, active ? 0.15 : RAMP)
   }
 
+  private cue: { thump: Tone.MembraneSynth; crackle: Tone.NoiseSynth } | null = null
+  private intro: { gain: Tone.Gain; nodes: Disposable[] } | null = null
+
+  /**
+   * Needle drop: a soft low thump and a short burst of vinyl crackle, played
+   * when a record is chosen. A cue only; it carries no data.
+   */
+  needleDrop(): void {
+    if (!this.started || !this.master) return
+    if (!this.cue) {
+      const thump = new Tone.MembraneSynth({
+        pitchDecay: 0.04,
+        octaves: 3,
+        envelope: { attack: 0.002, decay: 0.25, sustain: 0, release: 0.1 },
+        volume: -10,
+      }).connect(this.master)
+      const filter = new Tone.Filter(2600, 'bandpass').connect(this.master)
+      const crackle = new Tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { attack: 0.001, decay: 0.35, sustain: 0, release: 0.05 },
+        volume: -22,
+      }).connect(filter)
+      this.cue = { thump, crackle }
+    }
+    const at = Tone.immediate() + 0.02
+    this.cue.thump.triggerAttackRelease('A1', 0.15, at, 0.6)
+    this.cue.crackle.triggerAttackRelease(0.3, at + 0.01, 0.5)
+  }
+
+  /**
+   * The intro: a low drone that swells for `rise` seconds and fades over
+   * `fall` seconds. Returns when it ends; `introLevel` reads its real gain.
+   */
+  startIntro(rise = 2.4, fall = 1.8): number {
+    if (!this.started || !this.master) return 0
+    this.stopIntro()
+    const gain = new Tone.Gain(0).connect(this.master)
+    const filter = new Tone.Filter(320, 'lowpass').connect(gain)
+    const oscs = [33, 45, 52].map((m) =>
+      new Tone.FatOscillator({ type: 'sawtooth', frequency: midiToFrequency(m), spread: 18, count: 3, volume: -12 })
+        .connect(filter)
+        .start(),
+    )
+    const now = Tone.immediate()
+    gain.gain.setValueAtTime(0, now)
+    gain.gain.linearRampToValueAtTime(0.5, now + rise)
+    gain.gain.linearRampToValueAtTime(0, now + rise + fall)
+    this.intro = { gain, nodes: [gain, filter, ...oscs] }
+    return rise + fall
+  }
+
+  /** The intro drone's current gain, 0..1 of its peak; 0 when there is none. */
+  introLevel(): number {
+    return this.intro ? Math.min(1, this.intro.gain.gain.value / 0.5) : 0
+  }
+
+  stopIntro(): void {
+    if (!this.intro) return
+    const { gain, nodes } = this.intro
+    this.intro = null
+    gain.gain.cancelScheduledValues(Tone.immediate())
+    gain.gain.rampTo(0, 0.2)
+    setTimeout(() => nodes.forEach((n) => n.dispose()), 400)
+  }
+
   /** The output spectrum in decibels per bin, and the sample rate; null before sound starts. */
   spectrum(): { db: Float32Array; sampleRate: number } | null {
     if (!this.analyser) return null
