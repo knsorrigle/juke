@@ -229,11 +229,12 @@ describe('Lightning rules', () => {
     const busy = playTick(Array.from({ length: 8 }, (_, i) => blob(5, 5 + i * 8, 10)).flat())
     expect(busy.output.notes).toHaveLength(4)
     expect(busy.output.pad!.level).toBeGreaterThan(quiet.output.pad!.level)
-    expect(padTarget(80, LIGHTNING_DEFAULTS)).toBe(1)
+    expect(padTarget(LIGHTNING_DEFAULTS.flashCountFull, LIGHTNING_DEFAULTS)).toBe(1)
+    expect(padTarget(0, LIGHTNING_DEFAULTS)).toBe(0)
     expect(padTarget(100000, LIGHTNING_DEFAULTS)).toBe(1)
   })
 
-  it('lets the pad rise quickly, fall slowly and never drop below its floor', () => {
+  it('lets the pad swell over busy ticks, fade slowly and never drop below its floor', () => {
     let state = createLightningState()
     let time = 0.01
     const step = (pixels: RisingPixel[]) => {
@@ -242,12 +243,17 @@ describe('Lightning rules', () => {
       time += TICK
       return r.output.pad?.level
     }
-    step(blob(0, 0, 80))
-    const up = step(blob(0, 1, 80))!
-    expect(up).toBeGreaterThan(0.4)
-    const down = step([])!
-    expect(down).toBeGreaterThan(up * 0.5) // one quiet tick barely dents it
-    expect(down).toBeGreaterThan(0)
+    const busy = () => blob(0, 0, 100)
+    step(busy())
+    const levels: number[] = []
+    for (let i = 0; i < 12; i++) levels.push(step(busy())!)
+    expect(levels).toEqual([...levels].sort((a, b) => a - b)) // keeps rising
+    expect(levels[0]).toBeLessThan(0.3) // not instantly
+    expect(levels[11]).toBeGreaterThan(0.75)
+    expect(levels[11]).toBeLessThanOrEqual(1)
+    step([]) // this tick still plays what the last busy frame gathered
+    const afterOneQuiet = step([])!
+    expect(afterOneQuiet).toBeGreaterThan(levels[11] * 0.85) // one quiet tick barely dents it
     for (let i = 0; i < 200; i++) step([])
     expect(step([])).toBe(LIGHTNING_DEFAULTS.padFloor)
   })

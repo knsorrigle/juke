@@ -29,6 +29,8 @@ export interface LightningConfig {
   clusterSizeFull: number
   /** Newly lit pixels in one tick that drive the pad to full level. */
   flashCountFull: number
+  /** Exponent of the count-to-level curve; below 1 lifts quiet passages a little. */
+  padCurve: number
   /** The pad never drops below this while playing, so silence means "stopped". */
   padFloor: number
   /** Fraction of the gap to the target the pad closes per tick, rising and falling. */
@@ -39,10 +41,11 @@ export interface LightningConfig {
 }
 
 /**
- * Values measured on the real video at 160x80: a median tick holds about 25
- * newly lit pixels in 10 clusters (90th percentile: 60 pixels), the largest
- * cluster is typically 5 pixels (90th percentile: 13), and 99.9% of lightning
- * falls between 53 N and 46 S.
+ * Values measured on the real video at 160x80. A median tick holds about 25 to
+ * 35 newly lit pixels (90th percentile 60 to 75, maximum about 140); averaged
+ * over a couple of seconds the count swings from about 20 in quiet seasons to
+ * about 55 in busy ones. The largest cluster is typically 5 pixels (90th
+ * percentile 13), and 99.9% of lightning falls between 53 N and 46 S.
  */
 export const LIGHTNING_DEFAULTS: LightningConfig = {
   clock: { bpm: 110, division: 4 },
@@ -55,10 +58,11 @@ export const LIGHTNING_DEFAULTS: LightningConfig = {
   panWidth: 0.9,
   velocityMin: 0.25,
   clusterSizeFull: 14,
-  flashCountFull: 80,
+  flashCountFull: 110,
+  padCurve: 0.8,
   padFloor: 0.08,
-  padAttack: 0.45,
-  padRelease: 0.1,
+  padAttack: 0.2,
+  padRelease: 0.08,
   strum: 0.012,
 }
 
@@ -82,7 +86,7 @@ export function clusterVelocity(size: number, config: LightningConfig): number {
 
 /** Pad target for a tick that gathered `flashCount` newly lit pixels. */
 export function padTarget(flashCount: number, config: LightningConfig): number {
-  return clamp(Math.sqrt(flashCount / config.flashCountFull), 0, 1)
+  return clamp((flashCount / config.flashCountFull) ** config.padCurve, 0, 1)
 }
 
 /**
