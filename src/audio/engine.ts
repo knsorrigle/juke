@@ -172,6 +172,28 @@ export class AudioEngine {
     }
   }
 
+  private testVoice: { synth: Tone.Synth; panner: Tone.Panner } | null = null
+
+  /**
+   * An Ear Test tone: a plain sine at a fixed loudness, so only pitch differs
+   * between the two clips. `pan` -1 is the left ear, 1 the right.
+   */
+  playTestTone(midi: number, pan: number, delay: number, duration: number): void {
+    if (!this.started || !this.master) return
+    if (!this.testVoice) {
+      const panner = new Tone.Panner(0).connect(this.master)
+      const synth = new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.03, decay: 0, sustain: 1, release: 0.08 },
+        volume: -8,
+      }).connect(panner)
+      this.testVoice = { synth, panner }
+    }
+    const at = Tone.immediate() + delay
+    this.testVoice.panner.pan.setValueAtTime(clamp(pan, -1, 1), at - 0.01)
+    this.testVoice.synth.triggerAttackRelease(midiToFrequency(midi), duration, at, 0.8)
+  }
+
   /** Swap to a track's instruments, crossfading from whatever was playing. */
   loadTrack(instruments: InstrumentSpec[], knobs: Knobs): void {
     this.pending = { instruments, knobs }
