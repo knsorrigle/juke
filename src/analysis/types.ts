@@ -1,3 +1,6 @@
+import type { ClassStats, ColorClass } from './classify.ts'
+import type { ColormapOptions, ValueGrid } from './colormap.ts'
+
 /** Raw RGBA pixels, the shape of a canvas ImageData. */
 export interface PixelFrame {
   data: Uint8ClampedArray | Uint8Array
@@ -59,6 +62,10 @@ export interface AnalysisOptions {
   lumaRiseMin: number
   /** Parts of the frame to ignore, such as date stamps and legends. */
   masks: MaskRect[]
+  /** Legend colours to sort pixels into (empty = skip). */
+  classes: ColorClass[]
+  /** A legend colour scale to read data values from (null = skip). */
+  colormap: ColormapOptions | null
 }
 
 /** Per-pixel planes kept from one frame so the next can be compared with it. */
@@ -94,6 +101,10 @@ export interface FrameFeatures {
   signalMean: number
   /** Pixels that newly lit up since the previous frame. */
   risingPixels: RisingPixel[]
+  /** Amount and position of each legend colour, by class id. */
+  classes: Record<string, ClassStats>
+  /** Data values read back through the legend colour scale, on a grid. */
+  grid: ValueGrid | null
 }
 
 export interface AnalysisResult {

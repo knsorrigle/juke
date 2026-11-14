@@ -1,4 +1,6 @@
+import { classifyPixels } from './classify.ts'
 import { luminance, rgbToHsv, yellowness } from './color.ts'
+import { type ColormapLut, type ColormapStops, buildLut, colormapGrid } from './colormap.ts'
 import type {
   AnalysisOptions,
   AnalysisResult,
@@ -24,6 +26,18 @@ export const DEFAULT_ANALYSIS: AnalysisOptions = {
   signalFloor: 0.05,
   lumaRiseMin: 0.004,
   masks: [],
+  classes: [],
+  colormap: null,
+}
+
+const lutCache = new WeakMap<ColormapStops, ColormapLut>()
+function lutFor(stops: ColormapStops): ColormapLut {
+  let lut = lutCache.get(stops)
+  if (!lut) {
+    lut = buildLut(stops)
+    lutCache.set(stops, lut)
+  }
+  return lut
 }
 
 /** Pixels ignored when colouring the hue histogram: too grey or too dark to have a hue. */
@@ -309,6 +323,8 @@ export function analyzeFrame(
         o.signalFloor,
         o.lumaRiseMin,
       ),
+      classes: o.classes.length ? classifyPixels(frame, o.classes, o.columns, mask) : {},
+      grid: o.colormap ? colormapGrid(frame, o.colormap, lutFor(o.colormap.stops), mask) : null,
     },
   }
 }
