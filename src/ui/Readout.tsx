@@ -20,8 +20,9 @@ const pct = (v: number) => `${(v * 100).toFixed(2)}%`
 const db = (v: number) => (Number.isFinite(v) ? `${v.toFixed(1)} dB` : 'silent')
 
 /**
- * Live numbers from the analysis and the audio engine. Not a live region: it
- * updates several times a second, so a screen reader reads it only on request.
+ * Live numbers from the track's rules, the analysis and the audio engine. Not a
+ * live region: it updates several times a second, so a screen reader reads it
+ * only on request.
  */
 export function Readout() {
   const r = useJukebox((s) => s.readout)
@@ -30,27 +31,23 @@ export function Readout() {
   const colMax = Math.max(0.02, ...r.columnLuminance)
   const rowMax = Math.max(0.02, ...r.rowLuminance)
   const hueMax = Math.max(0.05, ...r.hueHistogram)
+  const info = Object.entries(r.info)
   return (
     <div className="readout" aria-live="off">
       <dl>
-        <div>
-          <dt>New lightning this pulse</dt>
-          <dd>
-            {r.tickFlashCount} pixels in {r.tickClusters} clusters, {r.tickNotes} notes played
-          </dd>
-        </div>
-        <div>
-          <dt>Hum level</dt>
-          <dd>{Math.round(r.padLevel * 100)}%</dd>
-        </div>
-        <div>
-          <dt>Newly lit pixels this frame</dt>
-          <dd>{r.risingPixels}</dd>
-        </div>
-        <div>
-          <dt>Yellow in frame</dt>
-          <dd>{pct(r.signalMean)}</dd>
-        </div>
+        {info.length ? (
+          info.map(([k, v]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))
+        ) : (
+          <div>
+            <dt>Track</dt>
+            <dd>Press play to hear and see the track's values.</dd>
+          </div>
+        )}
         <div>
           <dt>Mean brightness</dt>
           <dd>{pct(r.meanLuminance)}</dd>
@@ -58,10 +55,6 @@ export function Readout() {
         <div>
           <dt>Change since last frame</dt>
           <dd>{pct(r.diff)}</dd>
-        </div>
-        <div>
-          <dt>Bright spots</dt>
-          <dd>{r.brightSpots}</dd>
         </div>
         <div>
           <dt>Centre of brightness</dt>
@@ -77,7 +70,11 @@ export function Readout() {
         </div>
         <div>
           <dt>Sound output</dt>
-          <dd>{audioOn ? `${db(r.outputDb)} now, ${db(r.peakDb)} peak, ${r.notesTotal} notes` : 'off until you press play'}</dd>
+          <dd>
+            {audioOn
+              ? `${db(r.outputDb)} now, ${db(r.peakDb)} peak, ${r.notesTotal} notes`
+              : 'off until you press play'}
+          </dd>
         </div>
         <div>
           <dt>Analysis</dt>
@@ -89,12 +86,12 @@ export function Readout() {
       </dl>
       <div className="charts">
         <figure>
-          <Bars values={r.columnLuminance} max={colMax} label="Brightness in 16 bands, west to east" />
-          <figcaption>Brightness, west to east</figcaption>
+          <Bars values={r.columnLuminance} max={colMax} label="Brightness in 16 bands, left to right" />
+          <figcaption>Brightness, left to right</figcaption>
         </figure>
         <figure>
-          <Bars values={r.rowLuminance} max={rowMax} label="Brightness in 8 bands, north to south" />
-          <figcaption>Brightness, north to south</figcaption>
+          <Bars values={r.rowLuminance} max={rowMax} label="Brightness in 8 bands, top to bottom" />
+          <figcaption>Brightness, top to bottom</figcaption>
         </figure>
         <figure>
           <Bars values={r.hueHistogram} max={hueMax} label="Colour histogram in 12 hue bands" hue />

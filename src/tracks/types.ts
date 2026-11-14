@@ -29,9 +29,23 @@ export interface TimeLabels {
   yearCorrections: { from: number; to: number }[]
 }
 
+/** What the video shows at a moment, for the date badge and the screen reader. */
+export interface TimeDescription {
+  /** Shown on screen. */
+  text: string
+  /** Spoken when `key` changes, at most once per `minGap` seconds. */
+  spoken: string
+  key: string
+  minGap: number
+  /** Speak even if the gap has not passed (e.g. a new part of the video). */
+  urgent?: boolean
+}
+
 export interface Track {
   id: string
   title: string
+  /** Short name for the track list. */
+  shortTitle: string
   videoSrc: string
   credit: string
   sourceUrl: string
@@ -45,9 +59,11 @@ export interface Track {
   masks: MaskRect[]
   /** Plain-language lines explaining what each sound means. */
   legend: string[]
+  /** Per-frame dates from a file (Lightning). */
   timeLabels: TimeLabels | null
+  /** Dates or parts worked out from the video time (other tracks). */
+  describeTime?: (time: number) => TimeDescription | null
   /** Caveats about this track's configuration that later work should know. */
   notes?: string
-  /** Null until this track's sonification rules are written. */
-  createRunner: (() => RulesetRunner) | null
+  createRunner: () => RulesetRunner
 }

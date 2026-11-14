@@ -301,3 +301,67 @@ footer {
     border: 1px solid ButtonText;
   }
 }
+
+.tracks {
+  margin-bottom: 1.5rem;
+}
+
+.tracks ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tracks button,
+.secondary,
+.debug button {
+  min-block-size: 2.75rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tracks button[aria-current='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.secondary {
+  margin-bottom: 0.75rem;
+}
+
+.scan-beam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: rgb(255 255 255 / 0.75);
+  box-shadow: 0 0 8px rgb(255 255 255 / 0.6);
+  pointer-events: none;
+}
+
+.debug {
+  padding: 1.25rem;
+  border: 1px dashed var(--accent);
+  border-radius: 0.5rem;
+}
+
+.knob {
+  display: grid;
+  gap: 0.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.knob input {
+  accent-color: var(--accent);
+}

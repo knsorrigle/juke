@@ -1,12 +1,12 @@
+import { aerosols } from './aerosols.ts'
+import { co2 } from './co2.ts'
 import { lightning } from './lightning.ts'
+import { nightLights } from './nightLights.ts'
+import { seaSurfaceCurrents } from './ocean.ts'
 import type { Track } from './types.ts'
-import { aerosols, co2, nightLights, seaSurfaceCurrents } from './upcoming.ts'
 
-/** Every track, in display order. Tracks without rules yet have `createRunner: null`. */
-export const tracks: Track[] = [lightning, nightLights, aerosols, seaSurfaceCurrents, co2]
-
-/** Tracks that can be played today. */
-export const playableTracks: Track[] = tracks.filter((t) => t.createRunner !== null)
+/** Every track, in display order. */
+export const tracks: Track[] = [lightning, aerosols, seaSurfaceCurrents, nightLights, co2]
 
 export function getTrack(id: string): Track | undefined {
   return tracks.find((t) => t.id === id)
