@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ClassStats } from '../analysis/classify.ts'
 import type { FrameFeatures } from '../analysis/types.ts'
-import { AEROSOL_FULL, AEROSOL_KNOBS, createAerosolState, stepAerosols } from './aerosols.ts'
+import { AEROSOL_COLUMNS, AEROSOL_FULL, AEROSOL_KNOBS, DUST_EDGE_SHARE, createAerosolState, stepAerosols, westEdge } from './aerosols.ts'
 import { CO2_BASE_MIDI, CO2_FULL, stepCo2 } from './co2.ts'
 import {
   NIGHT_KNOBS,
@@ -47,30 +47,64 @@ describe('smoothing', () => {
 
 describe('Aerosols rules', () => {
   const step = (f: FrameFeatures, t: number, s: ReturnType<typeof createAerosolState>) => stepAerosols(f, t, s, AEROSOL_KNOBS)
-  const classes = (dustX: number) => ({
+  /** Dust filling every band from `edge` eastwards, with its centre further east. */
+  const plume = (edge: number, amount = AEROSOL_FULL.dust / 2, y = 0.4) => {
+    const from = Math.round(edge * AEROSOL_COLUMNS)
+    const columns = Array.from({ length: AEROSOL_COLUMNS }, (_, k) => (k >= from ? 2 * DUST_EDGE_SHARE : 0))
+    return stats(amount, (1 + edge) / 2, y, columns)
+  }
+  const classes = (dustEdge: number) => ({
     carbon: stats(AEROSOL_FULL.carbon, 0.4, 0.6),
-    dust: stats(AEROSOL_FULL.dust / 2, dustX, 0.4),
+    dust: plume(dustEdge),
     salt: stats(AEROSOL_FULL.salt, 0.6, 0.7),
     sulfate: stats(0, 0.5, 0.5),
   })
 
-  it('maps amount to level, horizontal centre to pan and vertical centre to register', () => {
+  it('finds the western edge of a plume, gliding between bands', () => {
+    const share = DUST_EDGE_SHARE
+    expect(westEdge([0, 0, 0, 0])).toBeNull()
+    expect(westEdge([share, 0, 0, 0])).toBe(0)
+    expect(westEdge([0, 0, share * 3, share])).toBe(0.5)
+    // The band beyond the edge at half the share moves the edge half a band west.
+    expect(westEdge([0, share / 2, share * 3, share])).toBe(0.375)
+    // A dusty band further west wins over a heavier one in the east.
+    expect(westEdge([0, share, 0, share * 9])).toBe(0.25)
+  })
+
+  it('maps amount to level, dust edge and other centres to pan, vertical centre to register', () => {
     const { last } = run(step, createAerosolState(), features({ classes: classes(0.2) }), 4)
     expect(last.voices!.carbon.level).toBeCloseTo(1, 1)
     expect(last.voices!.dust.level).toBeCloseTo(0.5, 1)
     expect(last.voices!.dust.pan).toBeCloseTo(-0.6, 1)
     expect(last.voices!.carbon.pan!).toBeLessThan(0)
-    const north = run(step, createAerosolState(), features({ classes: { ...classes(0.2), dust: stats(0.02, 0.5, 0.1) } }), 4).last
+    const north = run(step, createAerosolState(), features({ classes: { ...classes(0.2), dust: plume(0.2, 0.02, 0.1) } }), 4).last
     expect(north.voices!.dust.midi!).toBeGreaterThan(last.voices!.dust.midi!)
   })
 
-  it('moves the dust pan left as dust drifts west, smoothed over about half a second', () => {
-    const east = run(step, createAerosolState(), features({ classes: classes(0.7) }), 3)
-    const justAfter = step(features({ classes: classes(0.3) }), 3 + 2 / 30, east.state).output.voices!.dust.pan!
-    const later = run(step, east.state, features({ classes: classes(0.3) }), 3, 3.1).last.voices!.dust.pan!
+  it('pans dust by the plume edge, not its centre, so a plume reaching west moves the sound left', () => {
+    // A heavy source in the east keeps the centre still while a thin tongue reaches west.
+    const source = Array.from({ length: AEROSOL_COLUMNS }, (_, k) => (k >= 16 && k < 20 ? 10 * DUST_EDGE_SHARE : 0))
+    const tongue = source.map((v, k) => (k >= 8 && k < 16 ? DUST_EDGE_SHARE : v))
+    const at = (columns: number[]) => ({ ...classes(0.5), dust: stats(AEROSOL_FULL.dust / 2, 0.56, 0.4, columns) })
+    const before = run(step, createAerosolState(), features({ classes: at(source) }), 8)
+    const after = run(step, before.state, features({ classes: at(tongue) }), 8, 8.1)
+    expect(before.last.voices!.dust.pan!).toBeCloseTo(0, 1)
+    expect(after.last.voices!.dust.pan!).toBeCloseTo(-0.5, 1)
+    expect(after.last.info!['Dust (breath)']).toContain('west edge 90 degrees west')
+  })
+
+  it('moves the dust edge slowly, and holds it while no band is dusty', () => {
+    const east = run(step, createAerosolState(), features({ classes: classes(0.7) }), 8)
+    const justAfter = step(features({ classes: classes(0.3) }), 8 + 2 / 30, east.state).output.voices!.dust.pan!
+    const half = run(step, east.state, features({ classes: classes(0.3) }), 1.5, 8.1).last.voices!.dust.pan!
+    const later = run(step, east.state, features({ classes: classes(0.3) }), 8, 8.1)
     expect(east.last.voices!.dust.pan!).toBeCloseTo(0.4, 1)
-    expect(justAfter).toBeGreaterThan(0.2) // has not jumped
-    expect(later).toBeCloseTo(-0.4, 1)
+    expect(justAfter).toBeGreaterThan(0.3) // has not jumped
+    expect(half).toBeGreaterThan(-0.2) // still on its way after a second and a half
+    expect(later.last.voices!.dust.pan!).toBeCloseTo(-0.4, 1)
+    const faint = { ...classes(0.3), dust: stats(0.001, 0.9, 0.4, new Array(AEROSOL_COLUMNS).fill(0)) }
+    const held = run(step, later.state, features({ classes: faint }), 2, 16.2).last.voices!.dust.pan!
+    expect(held).toBeCloseTo(later.last.voices!.dust.pan!, 2)
   })
 
   it('plays more bell notes when there is more sea salt, none for an absent type, within the cap', () => {

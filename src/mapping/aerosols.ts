@@ -29,10 +29,44 @@ export const AEROSOL_FULL: Record<AerosolType, number> = {
 
 /** Seconds over which amounts and positions are smoothed. */
 const SMOOTH = 0.5
+/** The dust edge jumps about 10 degrees from frame to frame, so it is smoothed more slowly. */
+const EDGE_SMOOTH = 1.5
+/** Map bands for the dust edge: 32 bands of 11.25 degrees. */
+export const AEROSOL_COLUMNS = 32
+/**
+ * Share of a map band (brightness-weighted) at which the band counts as dusty.
+ * Measured on the real video at 3%: the edge starts near 42 W, reaches about
+ * 67 W by 18 s and holds to about 30 s, then pulls back to about 20 W by the
+ * end. Lower shares catch thin haze that is already far west at the start, so
+ * the push across the Atlantic barely shows; higher ones jump between bands.
+ */
+export const DUST_EDGE_SHARE = 0.03
 const BRASS_SCALE = scaleNotes(36, MAJOR_PENTATONIC, 1) // C2..C3
 const BREATH_SCALE = scaleNotes(60, MAJOR_PENTATONIC, 2) // C4..C6
 const BELL_SCALE = scaleNotes(72, MAJOR_PENTATONIC, 2) // C5..C7
 const PLUCK_SCALE = scaleNotes(48, MAJOR_PENTATONIC, 2) // C3..C5
+/**
+ * The western edge of a plume, 0..1 across the map: the left side of the
+ * westernmost band holding at least `share`, moved further west by how close
+ * the band beyond it comes to that share, so the edge glides between bands.
+ * Null when no band reaches the share.
+ */
+export function westEdge(columns: number[], share = DUST_EDGE_SHARE): number | null {
+  const n = columns.length
+  for (let k = 0; k < n; k++) {
+    if (columns[k] < share) continue
+    const beyond = k > 0 ? Math.min(1, columns[k - 1] / share) : 0
+    return (k - beyond) / n
+  }
+  return null
+}
+
+/** A map position 0..1 as longitude in words (the aerosols map spans 180 W to 180 E). */
+function longitude(x: number): string {
+  const lon = Math.round(-180 + 360 * x)
+  return `${Math.abs(lon)} degrees ${lon >= 0 ? 'east' : 'west'}`
+}
+
 /** Scale steps added in turn around each type's register, so repeated notes form a small figure. */
 const FIGURE = [0, 2, 1, -1, 0, 3, 1, -2]
 
@@ -46,6 +80,8 @@ export interface AerosolState {
   time: number | null
   tick: number | null
   types: Record<AerosolType, Smoothed>
+  /** The dust plume's western edge, 0..1 across the map; null until first seen. */
+  dustEdge: number | null
   /** Note "debt" per plucked or struck type: a note fires each time it passes 1. */
   energy: { salt: number; sulfate: number }
 }
@@ -56,6 +92,7 @@ export function createAerosolState(): AerosolState {
     time: null,
     tick: null,
     types: { carbon: blank(), dust: blank(), salt: blank(), sulfate: blank() },
+    dustEdge: null,
     energy: { salt: 0, sulfate: 0 },
   }
 }
@@ -65,7 +102,9 @@ export const AEROSOL_KNOBS: Knobs = { maxNotes: 2, humDb: 0, panWidth: 1, tempo:
 /**
  * One frame of the Aerosols rules. Each aerosol type is its own instrument:
  * amount -> level (or note density), horizontal centre -> pan, vertical centre
- * -> register (north is high). Black carbon and dust are sustained; sea salt
+ * -> register (north is high). Dust pans by its plume's western edge instead
+ * of its centre: the Sahara and Arabia hold the centre near 10 to 30 E all
+ * clip, while the edge crossing the Atlantic is what moves. Black carbon and dust are sustained; sea salt
  * (bells) and sulfate (plucks) play notes on a pulse, more often when there
  * is more of them.
  */
@@ -88,6 +127,14 @@ export function stepAerosols(
       y: stats && stats.amount > 0 ? smooth(prev.y, stats.y, dt, SMOOTH) : prev.y,
     }
   }
+  const seenEdge = features.classes.dust ? westEdge(features.classes.dust.columns) : null
+  const dustEdge =
+    seenEdge === null
+      ? state.dustEdge
+      : state.dustEdge === null
+        ? seenEdge
+        : smooth(state.dustEdge, seenEdge, dt, EDGE_SMOOTH)
+  const dustX = dustEdge ?? types.dust.x
   const pan = (x: number) => clamp((x - 0.5) * 2 * knobs.panWidth, -1, 1)
   const north = (y: number) => 1 - y
 
@@ -119,7 +166,7 @@ export function stepAerosols(
   const pct = (id: AerosolType) =>
     `${Math.round(types[id].level * 100)}% level, ${Math.round(types[id].x * 100)}% across`
   return {
-    state: { time, tick, types, energy },
+    state: { time, tick, types, dustEdge, energy },
     output: {
       notes,
       voices: {
@@ -131,13 +178,13 @@ export function stepAerosols(
         },
         dust: {
           level: types.dust.level,
-          pan: pan(types.dust.x),
+          pan: pan(dustX),
           midi: quantizeToScale(north(types.dust.y), BREATH_SCALE),
         },
       },
       info: {
         'Black carbon (brass)': pct('carbon'),
-        'Dust (breath)': pct('dust'),
+        'Dust (breath)': `${Math.round(types.dust.level * 100)}% level, west edge ${longitude(dustX)}`,
         'Sea salt (bells)': pct('salt'),
         'Sulfate (plucks)': pct('sulfate'),
       },
@@ -147,7 +194,7 @@ export function stepAerosols(
 
 export function createAerosolRuleset(): Ruleset<AerosolState> {
   return {
-    analysis: { classes: AEROSOL_CLASSES },
+    analysis: { classes: AEROSOL_CLASSES, columns: AEROSOL_COLUMNS },
     instruments: [
       { id: 'carbon', label: 'Black carbon', kind: 'brass', gain: 0.5, midi: [36, 43], color: '#d4624a' },
       { id: 'dust', label: 'Dust', kind: 'breath', gain: 0.9, midi: [72], color: '#c49be0' },
