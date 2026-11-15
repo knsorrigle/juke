@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "Earth Jukebox: NASA Earth visualizations played as music generated live from the video frames. AI coding assistants (Claude / Claude Code) helped write and test the code, prepare the videos and draft the docs; all sound is synthesized live from NASA frames, with no AI-generated images, video or audio.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
