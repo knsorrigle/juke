@@ -26,13 +26,13 @@ export const aerosols: Track = {
   legend: [
     'Four instruments, one per aerosol type. Hold Shift and press 1 to 4 to hear one alone, and the same keys again to hear them all.',
     '1. Black carbon (orange-red smoke from fires): a low, warm brass chord.',
-    '2. Dust (lilac): an airy, breathy whistle.',
+    '2. Dust (lilac): an airy, breathy whistle. It follows the western edge of the dust, so it moves left as Saharan dust crosses the Atlantic towards the Caribbean.',
     '3. Sea salt (grey-blue): soft bells.',
     '4. Sulfate (green, from pollution and volcanoes): short plucked notes.',
     'For each one: louder or more frequent means more of it; left and right is where it is, west to east; higher means further north.',
   ],
   timeLabels: null,
   notes:
-    'Dust demo: the whole-map dust centre only moves from about 22 E to 7 E between 0 and 16 s, a small pan change. The plume edge reaches the Caribbean (62 W) at about 12 to 18 s.',
+    'Dust demo: the dust sound pans by the plume\'s western edge, which pushes from about 42 W to about 67 W, near the Caribbean, between 0 and 18 s, holds there to about 30 s, then pulls back to about 20 W by the end. The whole-map dust centre barely moves (22 E to 7 E), so it is not used for dust.',
   createRunner: () => createRunner(createAerosolRuleset()),
 }
