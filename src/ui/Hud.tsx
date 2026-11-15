@@ -61,7 +61,7 @@ export function HudBottom({ track }: { track: Track }) {
   )
 }
 
-/** Mode switches: Play (1), Explore (2), Ear Test (4). The keys still work on their own. */
+/** Mode switches: Play (1), Explore (2), Ear Test (3). The keys still work on their own. */
 export function ModeSwitch({ player }: { player: JukeboxPlayer }) {
   const mode = useJukebox((s) => s.mode)
   const go = (next: 'play' | 'explore' | 'eartest') => {
@@ -79,7 +79,7 @@ export function ModeSwitch({ player }: { player: JukeboxPlayer }) {
   const buttons: { id: 'play' | 'explore' | 'eartest'; label: string; key: string }[] = [
     { id: 'play', label: 'Play', key: '1' },
     { id: 'explore', label: 'Explore', key: '2' },
-    { id: 'eartest', label: 'Ear Test', key: '4' },
+    { id: 'eartest', label: 'Ear Test', key: '3' },
   ]
   return (
     <div className="modes" role="group" aria-label="Mode">

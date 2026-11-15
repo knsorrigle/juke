@@ -191,7 +191,7 @@ export default function App() {
               <kbd>G</kbd> in more detail, <kbd>H</kbd> reads the corner readouts, <kbd>C</kbd>{' '}
               switches high contrast. <kbd>2</kbd> explores the paused picture with a cursor: arrows
               move it (with <kbd>Shift</kbd>, 10 at a time), <kbd>I</kbd> says what is under it,{' '}
-              <kbd>1</kbd> or <kbd>Esc</kbd> goes back. <kbd>4</kbd> starts the Ear Test. Sound
+              <kbd>1</kbd> or <kbd>Esc</kbd> goes back. <kbd>3</kbd> starts the Ear Test. Sound
               starts when you press play.
             </p>
           </section>
