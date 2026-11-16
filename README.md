@@ -144,3 +144,11 @@ All sound is synthesized live in your browser from the NASA video frames by the 
 ## Tech
 
 Vite, React, TypeScript, Tone.js, Zustand and Motion, with Vitest for tests. The fonts are Instrument Serif and JetBrains Mono, bundled through Fontsource. The site is hosted on Vercel as a static site.
+
+## Licence
+
+The code is released under the [MIT Licence](LICENSE).
+
+The licence does not cover:
+- **NASA material:** the videos, date labels and colour-bar images in `public/media/` are NASA's. Their credits are listed under Credits above, and NASA's own media guidelines apply to them.
+- **Fonts:** Instrument Serif and JetBrains Mono are under the SIL Open Font License 1.1.
